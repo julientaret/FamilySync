@@ -26,29 +26,4 @@ class AppwriteService: ObservableObject {
             return true
         }
     }
-    
-    func login(email: String, password: String) async throws -> Session {
-        return try await account.createEmailPasswordSession(
-            email: email,
-            password: password
-        )
-    }
-    
-    func logout() async throws {
-        _ = try await account.deleteSession(sessionId: "current")
-    }
-    
-    func createAccount(email: String, password: String, name: String) async throws {
-        _ = try await account.create(
-            userId: ID.unique(),
-            email: email,
-            password: password,
-            name: name
-        )
-    }
-    
-    // MARK: - Session Management
-    func checkCurrentSession() async throws {
-        _ = try await account.get()
-    }
 }
