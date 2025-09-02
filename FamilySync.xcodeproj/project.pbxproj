@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E0018CF72E66EF620088E382 /* Appwrite in Frameworks */ = {isa = PBXBuildFile; productRef = E0018CF62E66EF620088E382 /* Appwrite */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E0018CD92E66EE120088E382 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E0018CF72E66EF620088E382 /* Appwrite in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = FamilySync;
 			packageProductDependencies = (
+				E0018CF62E66EF620088E382 /* Appwrite */,
 			);
 			productName = FamilySync;
 			productReference = E0018CCB2E66EE110088E382 /* FamilySync.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = E0018CC22E66EE110088E382;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E0018CF52E66EF620088E382 /* XCRemoteSwiftPackageReference "sdk-for-apple" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E0018CCC2E66EE110088E382 /* Products */;
 			projectDirPath = "";
@@ -558,6 +567,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E0018CF52E66EF620088E382 /* XCRemoteSwiftPackageReference "sdk-for-apple" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/appwrite/sdk-for-apple";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E0018CF62E66EF620088E382 /* Appwrite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E0018CF52E66EF620088E382 /* XCRemoteSwiftPackageReference "sdk-for-apple" */;
+			productName = Appwrite;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E0018CC32E66EE110088E382 /* Project object */;
 }

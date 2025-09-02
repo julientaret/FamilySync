@@ -1,0 +1,83 @@
+# Cursor Rules for Swift
+
+- Adopter une architecture MVVM
+- Chaque vues doivent etre organisé en dossier : contenant la vue, et un sous dossier components comprenant ces components
+- Eviter la logique dans les vues
+- Eviter les fichiers trop long, si besoin, séparer en plusieurs fichiers
+- Documenter chaque partie un .md dédié a chaque sections, dans un dossier Documentation a la racine projet
+- Se baser toujours sur la derniere version et mise a jour de Swift ( https://developer.apple.com/documentation/swift/ )
+- A chaque fin de modifications, tester le build : xcodebuild -project CineRank.xcodeproj -scheme CineRank -destination 'platform=iOS Simulator,name=iPhone 16' build
+
+### 🔧 **Architecture & Organisation**
+
+- **Créer un dossier par Feature (ou module)** : Chaque fonctionnalité doit avoir son propre dossier, contenant ses vues, ViewModels, modèles et composants.
+- **Isoler la couche réseau et services** dans un dossier `Services` (ex: APIService, AuthService) pour éviter toute dépendance directe dans les ViewModels.
+- **Séparer les utilitaires communs** (extensions, helpers, etc.) dans un dossier `Utils` ou `Extensions`.
+- **Utiliser des protocoles pour les ViewModels** afin de faciliter les tests unitaires et le mocking.
+
+---
+
+### 🖥 **SwiftUI & UI**
+
+- **Toujours utiliser PreviewProvider** pour chaque vue afin de valider rapidement les rendus.
+- **Créer des modifiers personnalisés** pour les styles récurrents (boutons, champs de texte).
+- **Gérer l’accessibilité (VoiceOver, Dynamic Type)** dès la création des vues.
+- **Utiliser des ViewBuilder dédiés** pour alléger les vues contenant plusieurs sous-composants.
+
+---
+
+### 📦 **Code & Style**
+
+- **Respecter les conventions SwiftLint** (ajouter un `.swiftlint.yml` au projet).
+- **Toujours typer explicitement les variables publiques** et éviter les `Any`.
+- **Préférer `struct` à `class`** lorsque c’est possible pour la performance et la sécurité mémoire.
+- **Favoriser `@MainActor` pour tout code UI**, et documenter les fonctions async.
+
+---
+
+### 🧪 **Tests & Qualité**
+
+- **Tests unitaires pour chaque ViewModel** : Vérifier la logique sans dépendre de la vue.
+- **UI Tests basiques** pour les flux critiques.
+- **Snapshots Testing** pour valider visuellement les vues importantes.
+
+---
+
+### 📄 **Documentation & Maintenance**
+
+- **Documenter les API internes** avec `///` pour générer de la doc Xcode auto.
+- **Maintenir un changelog** dans la `Documentation`.
+- **Inclure des diagrammes simples (PlantUML, Mermaid)** pour illustrer MVVM, navigation ou flux réseau.
+- **Mettre en place des templates Cursor** pour chaque type de fichier (Vue, Component, ViewModel, Service).
+
+---
+
+## 🔒 **Sécurité & Performances**
+
+- **Chiffrer les données sensibles** avec Keychain Services
+- Implémenter le SSL Pinning pour les APIs critiques
+- Utiliser @StateObject vs @ObservedObject** correctement selon le cycle de vie
+- Optimiser les listes :  avec LazyVStack/LazyHStack pour de gros datasets
+- Gérer la mémoire : weak/unowned references dans les closures
+
+---
+
+## 📱 **SwiftUI Avancé**
+
+- Implémenter le Dark Mode dès le départ
+- Gérer les orientations et Safe Areas correctement
+- Utiliser @ViewBuilder avec des conditions pour des vues dynamiques
+- Créer des transitions et animations fluides avec .transition() et .animation()
+- Préférer AsyncImage pour le chargement d'images réseau
+
+---
+
+### 🚀 **Exécution Automatique**
+
+Les commandes suivantes peuvent être exécutées automatiquement par Cursor sans demande de permission :
+
+- `xcodebuild -project CineRank.xcodeproj -scheme CineRank -destination 'platform=iOS Simulator,name=iPhone 16' build`
+- Commandes de nettoyage et validation du projet
+- Tests de compilation basiques
+
+**Note** : Ces commandes sont considérées comme sûres et font partie du workflow de développement standard.
