@@ -33,7 +33,7 @@ class OAuth2Service: ObservableObject {
         }
         
         do {
-            try await account.createOAuth2Session(
+            _ = try await account.createOAuth2Session(
                 provider: .apple,
                 scopes: scopes
             )
@@ -64,7 +64,7 @@ class OAuth2Service: ObservableObject {
         }
         
         do {
-            try await account.createOAuth2Session(
+            _ = try await account.createOAuth2Session(
                 provider: .github,
                 scopes: scopes
             )
@@ -95,7 +95,7 @@ class OAuth2Service: ObservableObject {
         }
         
         do {
-            try await account.createOAuth2Session(
+            _ = try await account.createOAuth2Session(
                 provider: .google,
                 scopes: scopes
             )
@@ -159,7 +159,7 @@ class OAuth2Service: ObservableObject {
         }
         
         do {
-            try await account.deleteSession(sessionId: "current")
+            _ = try await account.deleteSession(sessionId: "current")
             await MainActor.run {
                 isAuthenticated = false
                 currentUser = nil
@@ -220,6 +220,6 @@ class OAuth2Service: ObservableObject {
     
     /// Initialise le service au démarrage de l'app
     func initialize() async {
-        try? await checkSession()
+        _ = try? await checkSession()
     }
 }
