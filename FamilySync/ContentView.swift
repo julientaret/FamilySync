@@ -59,53 +59,8 @@ struct ContentView: View {
             }
             
             Divider()
-            
-            // Section test de connexion
-            VStack(spacing: 15) {
-                Text("Test Appwrite Connection")
-                    .font(.headline)
-                    .foregroundColor(.secondary)
-                
-                Button("Send a ping") {
-                    sendPing()
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(isLoading)
-                
-                if isLoading {
-                    ProgressView()
-                        .padding()
-                }
-                
-                if !pingResult.isEmpty {
-                    Text(pingResult)
-                        .foregroundColor(pingResult.contains("Success") ? .green : .red)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                }
-            }
         }
         .padding()
-    }
-    
-    private func sendPing() {
-        isLoading = true
-        pingResult = ""
-        
-        Task {
-            do {
-                _ = try await appwriteService.testConnection()
-                await MainActor.run {
-                    pingResult = "Success! Appwrite connection is working."
-                    isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    pingResult = "Ping failed: \(error.localizedDescription)"
-                    isLoading = false
-                }
-            }
-        }
     }
     
     private func signOut() {

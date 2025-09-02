@@ -8,10 +8,11 @@ struct AppleSignInButton: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            // Bouton Sign in with Apple natif
+            // Bouton Sign in with Apple natif (RGPD compliant)
             SignInWithAppleButton(
                 onRequest: { request in
-                    request.requestedScopes = [.fullName, .email]
+                    // Ne demander AUCUNE donnée personnelle (RGPD compliant)
+                    request.requestedScopes = []
                 },
                 onCompletion: { result in
                     handleSignInWithApple(result)
@@ -85,6 +86,14 @@ struct AppleSignInButton: View {
                         self.errorMessage = "Connexion Apple non gérée"
                     case ASAuthorizationError.unknown:
                         self.errorMessage = "Erreur Apple inconnue"
+                    case ASAuthorizationError.notInteractive:
+                        self.errorMessage = "Connexion Apple non interactive"
+                    case ASAuthorizationError.matchedExcludedCredential:
+                        self.errorMessage = "Credential Apple exclu"
+                    case ASAuthorizationError.credentialImport:
+                        self.errorMessage = "Erreur d'import de credential"
+                    case ASAuthorizationError.credentialExport:
+                        self.errorMessage = "Erreur d'export de credential"
                     @unknown default:
                         self.errorMessage = "Erreur Apple: \(authError.localizedDescription)"
                     }

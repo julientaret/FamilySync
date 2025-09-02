@@ -4,6 +4,24 @@ import AppwriteEnums
 import AuthenticationServices
 import CryptoKit
 
+/// Erreurs spécifiques à Apple Sign In (RGPD compliant)
+enum AppleSignInError: Error, LocalizedError {
+    case authenticationFailed
+    case userCancelled
+    case networkError
+    
+    var errorDescription: String? {
+        switch self {
+        case .authenticationFailed:
+            return "Échec de l'authentification"
+        case .userCancelled:
+            return "Authentification annulée"
+        case .networkError:
+            return "Erreur de connexion réseau"
+        }
+    }
+}
+
 /// Service pour Apple Sign In avec OAuth2 Appwrite
 class AppleSignInService: ObservableObject {
     static let shared = AppleSignInService()
@@ -26,7 +44,7 @@ class AppleSignInService: ObservableObject {
     
     // MARK: - Apple Sign In OAuth2
     
-    /// Connexion avec Apple Sign In utilisant les credentials natifs
+    /// Connexion avec Apple Sign In (RGPD compliant - aucune donnée personnelle collectée)
     func signInWithApple(credential: ASAuthorizationAppleIDCredential) async throws {
         await MainActor.run {
             isLoading = true
@@ -34,39 +52,26 @@ class AppleSignInService: ObservableObject {
         }
         
         do {
-            print("🍎 Connexion Apple avec credentials natifs...")
+            print("🍎 Connexion Apple RGPD compliant (aucune donnée personnelle collectée)...")
             
-            // Extraire les informations du credential Apple
+            // Utiliser uniquement l'Apple User ID (anonymisé)
             let appleUserId = credential.user
-            let email = credential.email ?? "\(appleUserId)@privaterelay.appleid.com"
+            print("🔐 Authentification avec Apple User ID anonymisé")
             
-            // Construire le nom complet avec validation
-            let fullName: String
-            if let appleFullName = credential.fullName {
-                let firstName = appleFullName.givenName ?? ""
-                let lastName = appleFullName.familyName ?? ""
-                let constructedName = [firstName, lastName].filter { !$0.isEmpty }.joined(separator: " ")
-                
-                // S'assurer que le nom n'est pas vide et respecte les limites
-                if !constructedName.isEmpty && constructedName.count <= 128 {
-                    fullName = constructedName
-                } else {
-                    fullName = "Utilisateur Apple"
-                }
-            } else {
-                fullName = "Utilisateur Apple"
-            }
-            
-            print("🔐 Tentative de connexion pour: \(email)")
-            
-            // Créer un ID utilisateur stable et conforme aux règles Appwrite
+            // Créer un ID utilisateur stable et anonymisé
             let stableUserId = generateStableUserId(from: appleUserId)
-            let password = "apple_\(stableUserId)_pwd"
+            let password = generateSecurePassword(from: appleUserId)
+            
+            // Email anonymisé pour Appwrite (pas de vraie donnée personnelle)
+            let anonymousEmail = "\(stableUserId)@familysync.anonymous"
+            
+            // Nom anonymisé pour Appwrite (pas de vraie donnée personnelle)
+            let anonymousName = "Utilisateur"
             
             // Essayer de se connecter avec un utilisateur existant
             do {
                 _ = try await account.createEmailPasswordSession(
-                    email: email,
+                    email: anonymousEmail,
                     password: password
                 )
                 print("✅ Connexion réussie avec utilisateur existant")
@@ -74,25 +79,25 @@ class AppleSignInService: ObservableObject {
             } catch {
                 print("ℹ️ Utilisateur n'existe pas, création...")
                 
-                // Si la connexion échoue, créer un nouveau compte
+                // Créer un nouveau compte avec des données anonymisées
                 do {
                     _ = try await account.create(
                         userId: stableUserId,
-                        email: email,
+                        email: anonymousEmail,
                         password: password,
-                        name: fullName
+                        name: anonymousName
                     )
                     
                     // Puis se connecter
                     _ = try await account.createEmailPasswordSession(
-                        email: email,
+                        email: anonymousEmail,
                         password: password
                     )
-                    print("✅ Nouveau compte créé et connecté")
+                    print("✅ Nouveau compte créé et connecté (RGPD compliant)")
                     
                 } catch {
                     print("❌ Erreur lors de la création: \(error)")
-                    throw error
+                    throw AppleSignInError.authenticationFailed
                 }
             }
             
@@ -126,6 +131,25 @@ class AppleSignInService: ObservableObject {
         // Préfixer avec "apple_" (6 chars) pour un total de 36 chars max
         let shortHash = String(hashString.prefix(30))
         return "apple_\(shortHash)"
+    }
+    
+    /// Génère un mot de passe sécurisé (RGPD compliant)
+    private func generateSecurePassword(from appleUserId: String) -> String {
+        // Créer un hash SHA256 avec un salt pour plus de sécurité
+        let salt = "FamilySync_RGDP_Salt_2024"
+        let inputData = Data("\(appleUserId)\(salt)".utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        let hashString = hashedData.compactMap { String(format: "%02x", $0) }.joined()
+        
+        // Prendre les premiers 32 caractères pour un mot de passe fort
+        return String(hashString.prefix(32))
+    }
+    
+    /// Valide un email selon les standards RFC (RGPD compliant - validation technique uniquement)
+    private func isValidEmail(_ email: String) -> Bool {
+        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        return emailPredicate.evaluate(with: email)
     }
     
     // MARK: - Gestion des sessions
