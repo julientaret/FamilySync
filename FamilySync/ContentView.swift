@@ -8,14 +8,56 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var appwriteService: AppwriteService
+    @State private var pingResult = ""
+    @State private var isLoading = false
+    
     var body: some View {
-        VStack {
+        VStack(spacing: 20) {
             Image(systemName: "globe")
                 .imageScale(.large)
                 .foregroundStyle(.tint)
-            Text("Hello, world!")
+            
+            Text("FamilySync")
+                .font(.title)
+            
+            Button("Send a ping") {
+                sendPing()
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(isLoading)
+            
+            if isLoading {
+                ProgressView()
+            }
+            
+            if !pingResult.isEmpty {
+                Text(pingResult)
+                    .foregroundColor(pingResult.contains("Success") ? .green : .red)
+                    .multilineTextAlignment(.center)
+            }
         }
         .padding()
+    }
+    
+    private func sendPing() {
+        isLoading = true
+        pingResult = ""
+        
+        Task {
+            do {
+                _ = try await appwriteService.account.get()
+                await MainActor.run {
+                    pingResult = "Success! Appwrite connection is working."
+                    isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    pingResult = "Ping failed: \(error.localizedDescription)"
+                    isLoading = false
+                }
+            }
+        }
     }
 }
 
