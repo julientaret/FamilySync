@@ -46,4 +46,9 @@ class AppwriteService: ObservableObject {
             name: name
         )
     }
+    
+    // MARK: - Session Management
+    func checkCurrentSession() async throws {
+        _ = try await account.get()
+    }
 }

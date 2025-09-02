@@ -1,6 +1,7 @@
 import Foundation
 import AuthenticationServices
 import SwiftUI
+import Appwrite
 
 @MainActor
 class AppleSignInService: NSObject, ObservableObject {
@@ -9,6 +10,28 @@ class AppleSignInService: NSObject, ObservableObject {
     @Published var errorMessage: String?
     
     private let appwriteService = AppwriteService.shared
+    
+    override init() {
+        super.init()
+        checkExistingSession()
+    }
+    
+    private func checkExistingSession() {
+        Task {
+            do {
+                _ = try await appwriteService.checkCurrentSession()
+                await MainActor.run {
+                    self.isSignedIn = true
+                    print("Found existing session, user is already signed in")
+                }
+            } catch {
+                await MainActor.run {
+                    self.isSignedIn = false
+                    print("No existing session found")
+                }
+            }
+        }
+    }
     
     func signInWithApple() {
         isLoading = true
@@ -43,29 +66,27 @@ extension AppleSignInService: ASAuthorizationControllerDelegate {
             .compactMap { $0 }
             .joined(separator: " ")
         
-        print("Apple Sign In - Original User ID: \(userId)")
+        print("Apple Sign In - User ID: \(userId)")
         print("Apple Sign In - Email: \(email)")
         print("Apple Sign In - Name: \(name)")
         
         Task {
             do {
-                // Use email as the stable identifier for Apple users
-                // If email is available, use it directly, otherwise use the Apple user ID
-                let stableEmail: String
+                // Use Apple User ID as stable identifier - respects user privacy
+                let stableUserId = "apple_\(abs(userId.hashValue))"
+                
+                // Only use email if provided by user, otherwise use a privacy-friendly approach
+                let userEmail: String
                 if let providedEmail = appleIDCredential.email, !providedEmail.isEmpty {
-                    stableEmail = providedEmail
-                    print("Using provided email: \(stableEmail)")
+                    userEmail = providedEmail
+                    print("User provided email: \(userEmail)")
                 } else {
-                    // For existing users, Apple doesn't provide email again
-                    // Use the stable Apple user ID to generate consistent email
-                    stableEmail = "\(userId)@privaterelay.appleid.com"
-                    print("Using Apple ID based email: \(stableEmail)")
+                    // Create a unique but privacy-friendly email for Appwrite
+                    userEmail = "\(stableUserId)@appleid.local"
+                    print("Using privacy-friendly email: \(userEmail)")
                 }
                 
-                // Create consistent user ID based on email
-                let stableUserId = "apple_\(abs(stableEmail.hashValue))"
-                print("Apple Sign In - Stable User ID: \(stableUserId)")
-                print("Apple Sign In - Email: \(stableEmail)")
+                print("Using stable user ID: \(stableUserId)")
                 
                 // Clear any existing session first
                 do {
@@ -75,19 +96,19 @@ extension AppleSignInService: ASAuthorizationControllerDelegate {
                     print("No existing session to clear: \(error)")
                 }
                 
+                // Try to login first
                 do {
-                    // Try to login first with the stable email
                     _ = try await appwriteService.account.createEmailPasswordSession(
-                        email: stableEmail,
+                        email: userEmail,
                         password: "AppleUser123!"
                     )
                     print("Login successful with existing Apple account!")
                 } catch {
-                    print("User doesn't exist yet, creating account...")
+                    print("User doesn't exist, creating account...")
                     // Create the account if it doesn't exist
                     _ = try await appwriteService.account.create(
                         userId: stableUserId,
-                        email: stableEmail,
+                        email: userEmail,
                         password: "AppleUser123!",
                         name: name.isEmpty ? "Apple User" : name
                     )
@@ -95,7 +116,7 @@ extension AppleSignInService: ASAuthorizationControllerDelegate {
                     
                     // Login with the newly created account
                     _ = try await appwriteService.account.createEmailPasswordSession(
-                        email: stableEmail,
+                        email: userEmail,
                         password: "AppleUser123!"
                     )
                     print("Login successful after account creation!")
