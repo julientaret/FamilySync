@@ -1,16 +1,15 @@
 import Foundation
 import Appwrite
 import AppwriteEnums
+import AuthenticationServices
+import CryptoKit
 
-/// Service spécialisé pour Apple Sign In avec Appwrite
+/// Service pour Apple Sign In avec OAuth2 Appwrite
 class AppleSignInService: ObservableObject {
     static let shared = AppleSignInService()
     
     private let client: Client
     private let account: Account
-    
-    // URL de callback spécifique pour Apple
-    private let appleCallbackURL = "https://fra.cloud.appwrite.io/v1/account/sessions/oauth2/callback/apple/68b6b2fd001274a45f48"
     
     @Published var isAuthenticated = false
     @Published var currentUser: AppwriteUser?
@@ -25,164 +24,144 @@ class AppleSignInService: ObservableObject {
         account = Account(client)
     }
     
-    // MARK: - Apple Sign In
+    // MARK: - Apple Sign In OAuth2
     
-    /// Initialise la connexion avec Apple Sign In
-    /// - Parameter scopes: Les scopes demandés (nom, email par défaut)
-    func signInWithApple(scopes: [String] = ["name", "email"]) async throws {
+    /// Connexion avec Apple Sign In utilisant les credentials natifs
+    func signInWithApple(credential: ASAuthorizationAppleIDCredential) async throws {
         await MainActor.run {
             isLoading = true
             errorMessage = nil
         }
         
         do {
-            // Créer la session OAuth2 avec Apple
-            try await account.createOAuth2Session(
-                provider: .apple,
-                scopes: scopes
-            )
+            print("🍎 Connexion Apple avec credentials natifs...")
+            
+            // Extraire les informations du credential Apple
+            let appleUserId = credential.user
+            let email = credential.email ?? "\(appleUserId)@privaterelay.appleid.com"
+            
+            // Construire le nom complet avec validation
+            let fullName: String
+            if let appleFullName = credential.fullName {
+                let firstName = appleFullName.givenName ?? ""
+                let lastName = appleFullName.familyName ?? ""
+                let constructedName = [firstName, lastName].filter { !$0.isEmpty }.joined(separator: " ")
+                
+                // S'assurer que le nom n'est pas vide et respecte les limites
+                if !constructedName.isEmpty && constructedName.count <= 128 {
+                    fullName = constructedName
+                } else {
+                    fullName = "Utilisateur Apple"
+                }
+            } else {
+                fullName = "Utilisateur Apple"
+            }
+            
+            print("🔐 Tentative de connexion pour: \(email)")
+            
+            // Créer un ID utilisateur stable et conforme aux règles Appwrite
+            let stableUserId = generateStableUserId(from: appleUserId)
+            let password = "apple_\(stableUserId)_pwd"
+            
+            // Essayer de se connecter avec un utilisateur existant
+            do {
+                _ = try await account.createEmailPasswordSession(
+                    email: email,
+                    password: password
+                )
+                print("✅ Connexion réussie avec utilisateur existant")
+                
+            } catch {
+                print("ℹ️ Utilisateur n'existe pas, création...")
+                
+                // Si la connexion échoue, créer un nouveau compte
+                do {
+                    _ = try await account.create(
+                        userId: stableUserId,
+                        email: email,
+                        password: password,
+                        name: fullName
+                    )
+                    
+                    // Puis se connecter
+                    _ = try await account.createEmailPasswordSession(
+                        email: email,
+                        password: password
+                    )
+                    print("✅ Nouveau compte créé et connecté")
+                    
+                } catch {
+                    print("❌ Erreur lors de la création: \(error)")
+                    throw error
+                }
+            }
             
             await MainActor.run {
                 isAuthenticated = true
                 isLoading = false
             }
             
-            // Récupérer les informations de l'utilisateur
+            // Récupérer les informations utilisateur
             try await fetchCurrentUser()
             
         } catch {
             await MainActor.run {
-                errorMessage = "Erreur de connexion Apple: \(error.localizedDescription)"
+                errorMessage = error.localizedDescription
                 isLoading = false
             }
             throw error
         }
     }
     
-    /// Vérifie si l'utilisateur est connecté avec Apple
-    func checkAppleSession() async throws {
-        do {
-            let session = try await account.getSession(sessionId: "current")
-            
-            // Vérifier si c'est une session Apple
-            if session.provider == "apple" {
-                await MainActor.run {
-                    isAuthenticated = true
-                }
-                try await fetchCurrentUser()
-            } else {
-                await MainActor.run {
-                    isAuthenticated = false
-                    currentUser = nil
-                }
-            }
-        } catch {
-            await MainActor.run {
-                isAuthenticated = false
-                currentUser = nil
-            }
-        }
+    // MARK: - Utilitaires
+    
+    /// Génère un userId stable et conforme aux règles Appwrite à partir de l'Apple User ID
+    private func generateStableUserId(from appleUserId: String) -> String {
+        // Créer un hash SHA256 de l'Apple User ID
+        let inputData = Data(appleUserId.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        let hashString = hashedData.compactMap { String(format: "%02x", $0) }.joined()
+        
+        // Prendre les premiers 30 caractères pour rester sous la limite de 36
+        // Préfixer avec "apple_" (6 chars) pour un total de 36 chars max
+        let shortHash = String(hashString.prefix(30))
+        return "apple_\(shortHash)"
     }
     
-    // MARK: - User Management
+    // MARK: - Gestion des sessions
     
-    /// Récupère l'utilisateur actuel
+    /// Récupère les informations de l'utilisateur connecté
     func fetchCurrentUser() async throws {
         do {
             let user = try await account.get()
             await MainActor.run {
-                currentUser = user
+                self.currentUser = user
+                self.isAuthenticated = true
             }
         } catch {
             await MainActor.run {
-                errorMessage = "Erreur lors de la récupération de l'utilisateur: \(error.localizedDescription)"
+                self.currentUser = nil
+                self.isAuthenticated = false
             }
             throw error
         }
     }
     
-    /// Déconnecte l'utilisateur Apple
+    /// Déconnexion de l'utilisateur
     func signOut() async throws {
-        await MainActor.run {
-            isLoading = true
-        }
-        
         do {
-            try await account.deleteSession(sessionId: "current")
+            _ = try await account.deleteSession(sessionId: "current")
+            
             await MainActor.run {
                 isAuthenticated = false
                 currentUser = nil
-                isLoading = false
+                errorMessage = nil
             }
         } catch {
             await MainActor.run {
-                errorMessage = "Erreur lors de la déconnexion: \(error.localizedDescription)"
-                isLoading = false
+                errorMessage = error.localizedDescription
             }
             throw error
         }
-    }
-    
-    // MARK: - Apple Specific Features
-    
-    /// Récupère les informations de session Apple
-    func getAppleSessionInfo() async throws -> Session? {
-        do {
-            let session = try await account.getSession(sessionId: "current")
-            if session.provider == "apple" {
-                return session
-            }
-            return nil
-        } catch {
-            return nil
-        }
-    }
-    
-    /// Rafraîchit la session Apple si nécessaire
-    func refreshAppleSession() async throws {
-        do {
-            let session = try await account.getSession(sessionId: "current")
-            
-            if session.provider == "apple" {
-                // Vérifier si le token est sur le point d'expirer
-                if !session.providerAccessTokenExpiry.isEmpty {
-                    let expiryValue = TimeInterval(session.providerAccessTokenExpiry) ?? 0
-                    let expiryDate = Date(timeIntervalSince1970: expiryValue)
-                    let now = Date()
-                    
-                    // Si le token expire dans moins de 24h, le rafraîchir
-                    if expiryDate.timeIntervalSince(now) < 86400 {
-                        // Note: updateOAuth2Session n'est pas disponible dans cette version
-                        // La session sera automatiquement rafraîchie lors de la prochaine utilisation
-                    }
-                }
-            }
-        } catch {
-            await MainActor.run {
-                errorMessage = "Erreur lors du rafraîchissement de la session Apple: \(error.localizedDescription)"
-            }
-            throw error
-        }
-    }
-    
-    // MARK: - Utility Methods
-    
-    /// Nettoie les messages d'erreur
-    func clearError() {
-        errorMessage = nil
-    }
-    
-    /// Initialise le service au démarrage de l'app
-    func initialize() async {
-        try? await checkAppleSession()
-    }
-    
-    /// Vérifie si Apple Sign In est disponible
-    func isAppleSignInAvailable() -> Bool {
-        // Vérifier si l'appareil supporte Apple Sign In
-        if #available(iOS 13.0, *) {
-            return true
-        }
-        return false
     }
 }

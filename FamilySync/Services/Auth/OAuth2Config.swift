@@ -7,9 +7,9 @@ struct OAuth2Config {
     static let githubCallbackURL = "https://fra.cloud.appwrite.io/v1/account/sessions/oauth2/callback/github/68b6b2fd001274a45f48"
     static let googleCallbackURL = "https://fra.cloud.appwrite.io/v1/account/sessions/oauth2/callback/google/68b6b2fd001274a45f48"
     
-    // URLs de succès et d'échec (optionnel)
-    static let successURL = "https://familysync.app/success"
-    static let failureURL = "https://familysync.app/failure"
+    // URLs de succès et d'échec temporaires (pour test)
+    static let successURL = "https://httpbin.org/get?status=success"
+    static let failureURL = "https://httpbin.org/get?status=failure"
     
     // Scopes par défaut pour chaque provider
     static let appleScopes = ["name", "email"]

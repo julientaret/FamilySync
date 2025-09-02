@@ -1,106 +1,134 @@
 import Foundation
 import Appwrite
 import AppwriteEnums
+import Combine
+import AuthenticationServices
 
 /// Service principal d'authentification qui coordonne tous les services d'auth
 class AuthService: ObservableObject {
     static let shared = AuthService()
     
-    private let oauth2Service: OAuth2Service
-    private let appleSignInService: AppleSignInService
+    // Services d'authentification
+    private let oauth2Service = OAuth2Service.shared
+    private let appleSignInService = AppleSignInService.shared
     
+    // États d'authentification
     @Published var isAuthenticated = false
     @Published var currentUser: AppwriteUser?
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var currentProvider: AuthProvider = .none
     
-    enum AuthProvider {
-        case none
-        case apple
-        case github
-        case google
-        case email
+    // Types de providers
+    enum AuthProvider: String, CaseIterable {
+        case none = "none"
+        case apple = "apple"
+        case github = "github"
+        case google = "google"
+        
+        var displayName: String {
+            switch self {
+            case .none: return "Aucun"
+            case .apple: return "Apple"
+            case .github: return "GitHub"
+            case .google: return "Google"
+            }
+        }
     }
     
     private init() {
-        self.oauth2Service = OAuth2Service.shared
-        self.appleSignInService = AppleSignInService.shared
-        
-        // Observer les changements des services
         setupObservers()
+        checkExistingSession()
     }
     
-    // MARK: - Setup
+    // MARK: - Configuration des observateurs
     
     private func setupObservers() {
-        // Observer les changements du service OAuth2
-        oauth2Service.$isAuthenticated
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isAuthenticated in
-                self?.updateAuthState()
-            }
-            .store(in: &cancellables)
-        
-        oauth2Service.$currentUser
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] (user: AppwriteUser?) in
-                self?.currentUser = user
-            }
-            .store(in: &cancellables)
-        
-        oauth2Service.$isLoading
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isLoading in
-                self?.isLoading = isLoading
-            }
-            .store(in: &cancellables)
-        
-        oauth2Service.$errorMessage
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] errorMessage in
-                self?.errorMessage = errorMessage
-            }
-            .store(in: &cancellables)
-        
-        // Observer les changements du service Apple
+        // Observer les changements d'état d'Apple Sign In
         appleSignInService.$isAuthenticated
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] isAuthenticated in
-                self?.updateAuthState()
+            .sink { [weak self] isAuth in
+                if isAuth {
+                    self?.isAuthenticated = true
+                    self?.currentProvider = .apple
+                }
             }
             .store(in: &cancellables)
         
         appleSignInService.$currentUser
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] (user: AppwriteUser?) in
-                self?.currentUser = user
+            .sink { [weak self] user in
+                if user != nil {
+                    self?.currentUser = user
+                }
             }
             .store(in: &cancellables)
         
         appleSignInService.$isLoading
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] isLoading in
-                self?.isLoading = isLoading
+            .sink { [weak self] loading in
+                self?.isLoading = loading
             }
             .store(in: &cancellables)
         
         appleSignInService.$errorMessage
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] errorMessage in
-                self?.errorMessage = errorMessage
+            .sink { [weak self] error in
+                self?.errorMessage = error
+            }
+            .store(in: &cancellables)
+        
+        // Observer les changements d'état OAuth2
+        oauth2Service.$isAuthenticated
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isAuth in
+                if isAuth && self?.currentProvider != .apple {
+                    self?.isAuthenticated = true
+                }
+            }
+            .store(in: &cancellables)
+        
+        oauth2Service.$currentUser
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] user in
+                if user != nil && self?.currentProvider != .apple {
+                    self?.currentUser = user
+                }
             }
             .store(in: &cancellables)
     }
     
     private var cancellables = Set<AnyCancellable>()
     
+    // MARK: - Gestion des sessions
+    
+    private func checkExistingSession() {
+        Task {
+            await MainActor.run {
+                isLoading = true
+            }
+            
+            do {
+                // Essayer de récupérer l'utilisateur connecté
+                try await appleSignInService.fetchCurrentUser()
+                
+                await MainActor.run {
+                    isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                }
+            }
+        }
+    }
+    
     // MARK: - Authentication Methods
     
-    /// Connexion avec Apple Sign In
-    func signInWithApple() async throws {
+    /// Connexion avec Apple Sign In utilisant les credentials natifs
+    func signInWithApple(credential: ASAuthorizationAppleIDCredential) async throws {
         currentProvider = .apple
-        try await appleSignInService.signInWithApple()
+        try await appleSignInService.signInWithApple(credential: credential)
     }
     
     /// Connexion avec GitHub
@@ -115,13 +143,7 @@ class AuthService: ObservableObject {
         try await oauth2Service.signInWithGoogle()
     }
     
-    /// Connexion avec email et mot de passe
-    func signInWithEmail(email: String, password: String) async throws {
-        currentProvider = .email
-        try await signInWithEmailPassword(email: email, password: password)
-    }
-    
-    /// Déconnexion
+    /// Déconnexion de l'utilisateur
     func signOut() async throws {
         isLoading = true
         
@@ -129,7 +151,7 @@ class AuthService: ObservableObject {
             switch currentProvider {
             case .apple:
                 try await appleSignInService.signOut()
-            case .github, .google, .email:
+            case .github, .google:
                 try await oauth2Service.signOut()
             case .none:
                 break
@@ -140,125 +162,19 @@ class AuthService: ObservableObject {
                 currentUser = nil
                 currentProvider = .none
                 isLoading = false
+                errorMessage = nil
             }
         } catch {
             await MainActor.run {
-                errorMessage = "Erreur lors de la déconnexion: \(error.localizedDescription)"
                 isLoading = false
+                errorMessage = error.localizedDescription
             }
             throw error
         }
     }
     
-    // MARK: - Session Management
-    
-    /// Vérifie l'état de l'authentification au démarrage
-    func checkAuthState() async {
-        isLoading = true
-        
-        do {
-            // Vérifier d'abord Apple Sign In
-            try await appleSignInService.checkAppleSession()
-            
-            if !isAuthenticated {
-                // Si pas connecté avec Apple, vérifier OAuth2
-                try await oauth2Service.checkSession()
-            }
-            
-            await MainActor.run {
-                isLoading = false
-            }
-        } catch {
-            await MainActor.run {
-                isLoading = false
-                errorMessage = "Erreur lors de la vérification de l'authentification: \(error.localizedDescription)"
-            }
-        }
-    }
-    
-    /// Rafraîchit la session si nécessaire
-    func refreshSession() async {
-        do {
-            switch currentProvider {
-            case .apple:
-                try await appleSignInService.refreshAppleSession()
-            case .github, .google:
-                try await oauth2Service.refreshOAuth2Session()
-            case .email, .none:
-                break
-            }
-        } catch {
-            await MainActor.run {
-                errorMessage = "Erreur lors du rafraîchissement de la session: \(error.localizedDescription)"
-            }
-        }
-    }
-    
-    // MARK: - Private Methods
-    
-    private func updateAuthState() {
-        isAuthenticated = oauth2Service.isAuthenticated || appleSignInService.isAuthenticated
-        
-        if !isAuthenticated {
-            currentProvider = .none
-        }
-    }
-    
-    private func signInWithEmailPassword(email: String, password: String) async throws {
-        // Implémentation pour la connexion email/mot de passe
-        // À implémenter selon les besoins
-        throw NSError(domain: "AuthService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Connexion email non implémentée"])
-    }
-    
-    // MARK: - Utility Methods
-    
-    /// Nettoie les messages d'erreur
+    /// Efface les erreurs
     func clearError() {
         errorMessage = nil
-        oauth2Service.clearError()
-        appleSignInService.clearError()
-    }
-    
-    /// Initialise le service au démarrage de l'app
-    func initialize() async {
-        await checkAuthState()
-    }
-    
-    /// Vérifie si un provider est disponible
-    func isProviderAvailable(_ provider: AuthProvider) -> Bool {
-        switch provider {
-        case .apple:
-            return appleSignInService.isAppleSignInAvailable()
-        case .github, .google:
-            return true
-        case .email:
-            return true
-        case .none:
-            return false
-        }
-    }
-}
-
-// MARK: - Combine Extensions
-
-import Combine
-
-extension AuthService {
-    /// Publisher pour les changements d'authentification
-    var authStatePublisher: AnyPublisher<Bool, Never> {
-        $isAuthenticated
-            .eraseToAnyPublisher()
-    }
-    
-    /// Publisher pour les changements d'utilisateur
-    var userPublisher: AnyPublisher<AppwriteUser?, Never> {
-        $currentUser
-            .eraseToAnyPublisher()
-    }
-    
-    /// Publisher pour les erreurs
-    var errorPublisher: AnyPublisher<String?, Never> {
-        $errorMessage
-            .eraseToAnyPublisher()
     }
 }

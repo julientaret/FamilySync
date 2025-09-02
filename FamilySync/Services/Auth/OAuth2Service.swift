@@ -134,19 +134,21 @@ class OAuth2Service: ObservableObject {
         }
     }
     
-    /// Vérifie si une session existe
-    func checkSession() async throws {
+    /// Vérifie si une session existe et la retourne
+    func checkSession() async throws -> Session? {
         do {
             let session = try await account.getSession(sessionId: "current")
             await MainActor.run {
                 isAuthenticated = true
             }
             try await fetchCurrentUser()
+            return session
         } catch {
             await MainActor.run {
                 isAuthenticated = false
                 currentUser = nil
             }
+            return nil
         }
     }
     
