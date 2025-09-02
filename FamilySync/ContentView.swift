@@ -9,6 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var appwriteService: AppwriteService
+
+
     @EnvironmentObject var authService: AuthService
     @State private var pingResult = ""
     @State private var isLoading = false
