@@ -49,15 +49,56 @@ extension AppleSignInService: ASAuthorizationControllerDelegate {
         
         Task {
             do {
-                // Create a simple, unique user ID instead of using Apple's complex ID
-                let simpleUserId = "apple_\(abs(userId.hashValue))"
-                print("Apple Sign In - Simple User ID: \(simpleUserId)")
+                // Use email as the stable identifier for Apple users
+                // If email is available, use it directly, otherwise use the Apple user ID
+                let stableEmail: String
+                if let providedEmail = appleIDCredential.email, !providedEmail.isEmpty {
+                    stableEmail = providedEmail
+                    print("Using provided email: \(stableEmail)")
+                } else {
+                    // For existing users, Apple doesn't provide email again
+                    // Use the stable Apple user ID to generate consistent email
+                    stableEmail = "\(userId)@privaterelay.appleid.com"
+                    print("Using Apple ID based email: \(stableEmail)")
+                }
                 
-                // Try to login first (user might already exist)
-                let success = try await loginWithAppleID(userId: simpleUserId)
-                if !success {
-                    // If login fails, create new account
-                    try await createAccountWithAppleID(userId: simpleUserId, email: email, name: name)
+                // Create consistent user ID based on email
+                let stableUserId = "apple_\(abs(stableEmail.hashValue))"
+                print("Apple Sign In - Stable User ID: \(stableUserId)")
+                print("Apple Sign In - Email: \(stableEmail)")
+                
+                // Clear any existing session first
+                do {
+                    try await appwriteService.logout()
+                    print("Existing session cleared")
+                } catch {
+                    print("No existing session to clear: \(error)")
+                }
+                
+                do {
+                    // Try to login first with the stable email
+                    _ = try await appwriteService.account.createEmailPasswordSession(
+                        email: stableEmail,
+                        password: "AppleUser123!"
+                    )
+                    print("Login successful with existing Apple account!")
+                } catch {
+                    print("User doesn't exist yet, creating account...")
+                    // Create the account if it doesn't exist
+                    _ = try await appwriteService.account.create(
+                        userId: stableUserId,
+                        email: stableEmail,
+                        password: "AppleUser123!",
+                        name: name.isEmpty ? "Apple User" : name
+                    )
+                    print("Account created successfully!")
+                    
+                    // Login with the newly created account
+                    _ = try await appwriteService.account.createEmailPasswordSession(
+                        email: stableEmail,
+                        password: "AppleUser123!"
+                    )
+                    print("Login successful after account creation!")
                 }
                 
                 await MainActor.run {
@@ -66,8 +107,13 @@ extension AppleSignInService: ASAuthorizationControllerDelegate {
                 }
             } catch {
                 print("Apple Sign In Error: \(error)")
+                let errorDescription = error.localizedDescription
                 await MainActor.run {
-                    self.errorMessage = "Sign in failed: \(error.localizedDescription)"
+                    if errorDescription.contains("Rate limit") {
+                        self.errorMessage = "Too many attempts. Please wait a few minutes and try again."
+                    } else {
+                        self.errorMessage = "Sign in failed: \(errorDescription)"
+                    }
                     self.isLoading = false
                 }
             }
@@ -77,51 +123,6 @@ extension AppleSignInService: ASAuthorizationControllerDelegate {
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         errorMessage = "Sign in cancelled or failed: \(error.localizedDescription)"
         isLoading = false
-    }
-    
-    private func loginWithAppleID(userId: String) async throws -> Bool {
-        do {
-            let emailAddress = "\(userId)@appleid.com"
-            print("Attempting login with email: \(emailAddress)")
-            
-            // Try to create a session with Apple ID as both email and password
-            // This is a workaround since Appwrite doesn't have native Apple Sign In
-            _ = try await appwriteService.account.createEmailPasswordSession(
-                email: emailAddress,
-                password: "AppleUser123!"  // Fixed strong password
-            )
-            print("Login successful!")
-            return true
-        } catch {
-            print("Login attempt failed: \(error)")
-            // If login fails, user doesn't exist yet
-            return false
-        }
-    }
-    
-    private func createAccountWithAppleID(userId: String, email: String, name: String) async throws {
-        print("Creating account for: \(name) with userId: \(userId)")
-        
-        let emailAddress = "\(userId)@appleid.com"
-        print("Using email address: \(emailAddress)")
-        
-        // Create account with simple Apple user ID
-        _ = try await appwriteService.account.create(
-            userId: userId, // userId is already clean (apple_123456)
-            email: emailAddress,
-            password: "AppleUser123!",  // Fixed strong password
-            name: name
-        )
-        
-        print("Account created successfully, now logging in...")
-        
-        // Immediately login after creation
-        _ = try await appwriteService.account.createEmailPasswordSession(
-            email: emailAddress, 
-            password: "AppleUser123!"
-        )
-        
-        print("Login successful!")
     }
 }
 
