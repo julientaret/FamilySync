@@ -8,6 +8,7 @@ class OAuth2Service: ObservableObject {
     
     private let client: Client
     private let account: Account
+    private let userDatabaseService = UserDatabaseService.shared
     
     @Published var isAuthenticated = false
     @Published var currentUser: AppwriteUser?
@@ -126,6 +127,10 @@ class OAuth2Service: ObservableObject {
             await MainActor.run {
                 currentUser = user
             }
+            
+            // Enregistrer l'utilisateur dans la base de données
+            try await userDatabaseService.ensureUserExists(userId: user.id)
+            
         } catch {
             await MainActor.run {
                 errorMessage = "Erreur lors de la récupération de l'utilisateur: \(error.localizedDescription)"

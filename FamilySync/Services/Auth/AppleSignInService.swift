@@ -28,6 +28,7 @@ class AppleSignInService: ObservableObject {
     
     private let client: Client
     private let account: Account
+    private let userDatabaseService = UserDatabaseService.shared
     
     @Published var isAuthenticated = false
     @Published var currentUser: AppwriteUser?
@@ -162,6 +163,10 @@ class AppleSignInService: ObservableObject {
                 self.currentUser = user
                 self.isAuthenticated = true
             }
+            
+            // Enregistrer l'utilisateur dans la base de données
+            try await userDatabaseService.ensureUserExists(userId: user.id)
+            
         } catch {
             await MainActor.run {
                 self.currentUser = nil
