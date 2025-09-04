@@ -13,16 +13,17 @@ struct StartButton: View {
     var body: some View {
         Button(action: action) {
             Text("START")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.5))
                 .frame(maxWidth: 200)
                 .frame(height: 50)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.white, lineWidth: 2)
+                        .stroke(Color(red: 1.0, green: 0.6, blue: 0.5), lineWidth: 2)
                 )
         }
-        .shadow(color: Color(red: 1.0, green: 0.6, blue: 0.3).opacity(0.6), radius: 3, x: 0, y: 2)
+        .shadow(color: Color.white.opacity(1), radius: 3, x: 0, y: 2)
+
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(1.0)
         .animation(.easeInOut(duration: 0.2), value: true)

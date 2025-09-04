@@ -16,7 +16,7 @@ struct OnboardingStep: View {
             // Checkmark Icon
             Image(systemName: icon)
                 .font(.system(size: 20, weight: .medium))
-                .foregroundColor(.gray.opacity(0.4))
+                .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.5))
                 .frame(width: 24, height: 24)
             
             // Step Text

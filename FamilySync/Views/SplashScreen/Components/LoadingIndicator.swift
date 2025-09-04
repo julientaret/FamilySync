@@ -15,7 +15,7 @@ struct LoadingIndicator: View {
             // Spinner
             ZStack {
                 Circle()
-                    .stroke(Color.white.opacity(0.3), lineWidth: 4)
+                    .stroke(Color(red: 1.0, green: 0.6, blue: 0.5), lineWidth: 4)
                     .frame(width: 40, height: 40)
                 
                 Circle()
@@ -33,7 +33,7 @@ struct LoadingIndicator: View {
             // Loading text
             Text("Connecting...")
                 .font(.system(size: 14, weight: .medium, design: .rounded))
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.5))
         }
         .onAppear {
             isAnimating = true

@@ -18,11 +18,11 @@ struct SplashScreenView: View {
                 colors: [
                     Color(red: 1.0, green: 0.7, blue: 0.6),    // Couleur coral/saumon en haut
                       Color(red: 1.0, green: 0.85, blue: 0.7),   // Couleur pêche au milieu
-                    Color(red: 0.98, green: 0.75, blue: 0.80)  // Couleur rose pâle en bas
+                        Color(red: 0.98, green: 0.75, blue: 0.80)  // Couleur rose pâle en bas
                 ],
                 startPoint: .top,
                 endPoint: .bottom
-            )
+            ).opacity(0.3)
             .ignoresSafeArea()
             
             VStack(spacing: 30) {
@@ -35,16 +35,15 @@ struct SplashScreenView: View {
                 // App Name
                 Text("FamilySync")
                     .font(.system(size: 42, weight: .black, design: .rounded))
-                    .foregroundColor(.white)
-                    .shadow(color: Color(red: 1.0, green: 0.6, blue: 0.3).opacity(0.6), radius: 3, x: 0, y: 2)
+                    .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.5))
+                    .shadow(color: Color.white.opacity(0.4), radius: 3, x: 0, y: 2)
+
                 
                 // Tagline
                 Text("Organize your family life")
                     .font(.system(size: 20, weight: .regular, design: .rounded))
-                    .foregroundColor(.white.opacity(0.9))
-                    .shadow(color: Color(red: 1.0, green: 0.6, blue: 0.3).opacity(0.6), radius: 3, x: 0, y: 2)
+                    .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.5))
                     .padding(.bottom, 60)
-                StartButton(action: viewModel.startApp)
 
                 // Action Button
                 if viewModel.isFirstLaunch {
