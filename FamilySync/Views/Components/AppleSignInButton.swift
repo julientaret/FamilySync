@@ -18,8 +18,10 @@ struct AppleSignInButton: View {
                     handleSignInWithApple(result)
                 }
             )
-            .signInWithAppleButtonStyle(.black)
+            .signInWithAppleButtonStyle(.white)
             .frame(height: 50)
+            .cornerRadius(25)
+            .shadow(color: Color(red: 1.0, green: 0.6, blue: 0.3).opacity(0.6), radius: 3, x: 0, y: 2)
             .disabled(isLoading)
             
             // Indicateur de chargement

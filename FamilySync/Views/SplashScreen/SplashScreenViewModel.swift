@@ -55,8 +55,7 @@ class SplashScreenViewModel: ObservableObject {
         // Marquer que l'app a été lancée
         userDefaults.set(true, forKey: firstLaunchKey)
         
-        // Naviguer vers l'écran principal
-        shouldNavigateToMain = true
+        // Naviguer vers l'onboarding (pas directement vers l'écran principal)
         NotificationCenter.default.post(name: .splashScreenCompleted, object: nil)
     }
 }
