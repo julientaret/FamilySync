@@ -5,12 +5,14 @@ import AppwriteEnums
 struct UserDocument: Codable {
     let id: String
     let userId: String
+    let familyId: String?
     let createdAt: String
     let updatedAt: String
     
     enum CodingKeys: String, CodingKey {
         case id = "$id"
         case userId = "user_id"
+        case familyId = "family_id"
         case createdAt = "$createdAt"
         case updatedAt = "$updatedAt"
     }
@@ -48,6 +50,7 @@ class UserDatabaseService: ObservableObject {
             return UserDocument(
                 id: document.id,
                 userId: userId,
+                familyId: nil,
                 createdAt: document.createdAt,
                 updatedAt: document.updatedAt
             )
@@ -67,7 +70,8 @@ class UserDatabaseService: ObservableObject {
             
             return UserDocument(
                 id: document.id,
-                userId: document.data["user_id"] as? String ?? "",
+                userId: document.data["user_id"]?.value as? String ?? "",
+                familyId: document.data["family_id"]?.value as? String,
                 createdAt: document.createdAt,
                 updatedAt: document.updatedAt
             )
@@ -89,7 +93,32 @@ class UserDatabaseService: ObservableObject {
             
             return UserDocument(
                 id: document.id,
-                userId: document.data["user_id"] as? String ?? "",
+                userId: document.data["user_id"]?.value as? String ?? "",
+                familyId: document.data["family_id"]?.value as? String,
+                createdAt: document.createdAt,
+                updatedAt: document.updatedAt
+            )
+        } catch {
+            throw error
+        }
+    }
+    
+    /// Met à jour la famille d'un utilisateur
+    func updateUserFamily(userId: String, familyId: String) async throws -> UserDocument {
+        do {
+            let document = try await database.updateDocument(
+                databaseId: databaseId,
+                collectionId: collectionId,
+                documentId: userId,
+                data: [
+                    "family_id": familyId
+                ]
+            )
+            
+            return UserDocument(
+                id: document.id,
+                userId: document.data["user_id"]?.value as? String ?? "",
+                familyId: document.data["family_id"]?.value as? String,
                 createdAt: document.createdAt,
                 updatedAt: document.updatedAt
             )

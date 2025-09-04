@@ -10,6 +10,7 @@ import SwiftUI
 struct OnboardingView2: View {
     @EnvironmentObject var authService: AuthService
     @EnvironmentObject var onboardingViewModel: OnboardingViewModel
+    @StateObject private var familyViewModel = FamilyManagementViewModel()
     
     var body: some View {
         ZStack {
@@ -51,7 +52,7 @@ struct OnboardingView2: View {
                 // Action Buttons
                 VStack(spacing: 16) {
                     Button(action: {
-                        onboardingViewModel.nextStep()
+                        familyViewModel.showCreateFamilyModal = true
                     }) {
                         Text("Create New Family")
                             .font(.system(size: 18, weight: .semibold))
@@ -63,7 +64,7 @@ struct OnboardingView2: View {
                     }
                     
                     Button(action: {
-                        onboardingViewModel.nextStep()
+                        familyViewModel.showJoinFamilyModal = true
                     }) {
                         Text("Join Existing Family")
                             .font(.system(size: 18, weight: .semibold))
@@ -81,6 +82,28 @@ struct OnboardingView2: View {
                 .padding(.horizontal, 40)
                 
                 Spacer()
+            }
+        }
+        .sheet(isPresented: $familyViewModel.showCreateFamilyModal) {
+            CreateFamilyModal()
+                .environmentObject(familyViewModel)
+                .environmentObject(authService)
+        }
+        .sheet(isPresented: $familyViewModel.showJoinFamilyModal) {
+            JoinFamilyModal()
+                .environmentObject(familyViewModel)
+                .environmentObject(authService)
+        }
+        .sheet(isPresented: $familyViewModel.showInviteCodeModal) {
+            InviteCodeModal()
+                .environmentObject(familyViewModel)
+                .environmentObject(onboardingViewModel)
+        }
+        .onChange(of: familyViewModel.currentFamily) { family in
+            if family != nil && !familyViewModel.showInviteCodeModal {
+                // Si une famille a été rejointe (pas créée), passer à l'étape suivante
+                onboardingViewModel.currentFamily = family
+                onboardingViewModel.nextStep()
             }
         }
     }

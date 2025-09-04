@@ -16,6 +16,12 @@ class OnboardingViewModel: ObservableObject {
     @Published var userName: String = ""
     @Published var userBirthday: Date = Date()
     
+    // États pour la gestion des familles
+    @Published var showCreateFamilyModal: Bool = false
+    @Published var showJoinFamilyModal: Bool = false
+    @Published var showInviteCodeModal: Bool = false
+    @Published var currentFamily: Family?
+    
     private let userDefaults = UserDefaults.standard
     private let hasSeenOnboardingKey = "hasSeenOnboarding"
     private let userNameKey = "userName"
