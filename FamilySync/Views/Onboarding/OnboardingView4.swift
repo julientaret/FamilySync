@@ -5,158 +5,158 @@ struct OnboardingView4: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            VStack(spacing: 20) {
-                Text("Récapitulatif")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.primary)
-                    .padding(.top, 40)
-                
-                Text("Vérifiez vos informations avant de commencer")
-                    .font(.system(size: 16))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
-            }
-            .padding(.bottom, 40)
+        ZStack {
+            // Background
+            OnboardingBackground()
             
-            // Content
-            ScrollView {
-                VStack(spacing: 30) {
-                    // Profile Section
-                    VStack(spacing: 20) {
-                        HStack {
-                            Image(systemName: "person.circle.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(Color(hex: "#e9906f"))
-                            
-                            Text("Profil")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                        }
-                        
-                        VStack(spacing: 15) {
-                            InfoRow(
-                                icon: "person.fill",
-                                title: "Nom",
-                                value: onboardingViewModel.userName.isEmpty ? "Non renseigné" : onboardingViewModel.userName,
-                                color: onboardingViewModel.userName.isEmpty ? .red : .green
-                            )
-                            
-                            InfoRow(
-                                icon: "calendar",
-                                title: "Date de naissance",
-                                value: formatDate(onboardingViewModel.userBirthday),
-                                color: .green
-                            )
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    .padding(.horizontal, 20)
+            VStack(spacing: 40) {
+
+                // Content
+                ScrollView {
+                    // Title
+                    OnboardingTitle(firstLine: "Ready to", secondLine: "Start!")
+                
                     
-                    // Family Section
-                    VStack(spacing: 20) {
-                        HStack {
-                            Image(systemName: "house.fill")
-                                .font(.system(size: 24))
-                                .foregroundColor(Color(hex: "#e9906f"))
+                    // Family Illustration
+                    Image("family_onboard")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 200)
+                        .padding(.horizontal, 40)
+                    VStack(spacing: 30) {
+                        // Profile Section
+                        VStack(spacing: 20) {
+                            HStack {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(OnboardingColors.primary)
+                                
+                                Text("Profil")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(OnboardingColors.primary)
+                                
+                                Spacer()
+                            }
                             
-                            Text("Famille")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                        }
-                        
-                        VStack(spacing: 15) {
-                            if let currentFamily = onboardingViewModel.currentFamily {
+                            VStack(spacing: 15) {
                                 InfoRow(
-                                    icon: "checkmark.circle.fill",
-                                    title: "Famille rejointe",
-                                    value: currentFamily.name,
+                                    icon: "person.fill",
+                                    title: "Nom",
+                                    value: onboardingViewModel.userName.isEmpty ? "Non renseigné" : onboardingViewModel.userName,
+                                    color: onboardingViewModel.userName.isEmpty ? .red : .green
+                                )
+                                
+                                InfoRow(
+                                    icon: "calendar",
+                                    title: "Date de naissance",
+                                    value: formatDate(onboardingViewModel.userBirthday),
                                     color: .green
                                 )
-                            } else {
+                            }
+                            .padding(.horizontal, 20)
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // Family Section
+                        VStack(spacing: 20) {
+                            HStack {
+                                Image(systemName: "house.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(OnboardingColors.primary)
+                                
+                                Text("Famille")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(OnboardingColors.primary)
+                                
+                                Spacer()
+                            }
+                            
+                            VStack(spacing: 15) {
+                                if let currentFamily = onboardingViewModel.currentFamily {
+                                    InfoRow(
+                                        icon: "checkmark.circle.fill",
+                                        title: "Famille rejointe",
+                                        value: currentFamily.name,
+                                        color: .green
+                                    )
+                                } else {
+                                    InfoRow(
+                                        icon: "exclamationmark.triangle.fill",
+                                        title: "Famille",
+                                        value: "Aucune famille sélectionnée",
+                                        color: .orange
+                                    )
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // Account Section
+                        VStack(spacing: 20) {
+                            HStack {
+                                Image(systemName: "apple.logo")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(OnboardingColors.primary)
+                                
+                                Text("Compte")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(OnboardingColors.primary)
+                                
+                                Spacer()
+                            }
+                            
+                            VStack(spacing: 15) {
                                 InfoRow(
-                                    icon: "exclamationmark.triangle.fill",
-                                    title: "Famille",
-                                    value: "Aucune famille sélectionnée",
-                                    color: .orange
+                                    icon: "checkmark.shield.fill",
+                                    title: "Authentification",
+                                    value: "Apple ID connecté",
+                                    color: .green
                                 )
                             }
+                            .padding(.horizontal, 20)
                         }
                         .padding(.horizontal, 20)
                     }
-                    .padding(.horizontal, 20)
-                    
-                    // Account Section
-                    VStack(spacing: 20) {
-                        HStack {
-                            Image(systemName: "apple.logo")
-                                .font(.system(size: 24))
-                                .foregroundColor(Color(hex: "#e9906f"))
-                            
-                            Text("Compte")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                        }
-                        
-                        VStack(spacing: 15) {
-                            InfoRow(
-                                icon: "checkmark.shield.fill",
-                                title: "Authentification",
-                                value: "Apple ID connecté",
-                                color: .green
-                            )
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    .padding(.horizontal, 20)
+                    .padding(.bottom, 40)
                 }
-                .padding(.bottom, 40)
-            }
-            
-            // Bottom Button
-            VStack(spacing: 15) {
-                Button(action: {
-                    onboardingViewModel.completeOnboarding()
-                }) {
-                    HStack {
-                        if onboardingViewModel.isLoading {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(0.8)
-                        }
-                        
-                        Text(onboardingViewModel.isLoading ? "Configuration..." : "Let's Go!")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(Color(hex: "#e9906f"))
-                    .cornerRadius(25)
-                    .shadow(color: Color(hex: "#e9906f").opacity(0.3), radius: 10, x: 0, y: 5)
-                }
-                .disabled(onboardingViewModel.isLoading)
                 
-                if let errorMessage = onboardingViewModel.errorMessage {
-                    Text(errorMessage)
-                        .font(.system(size: 14))
-                        .foregroundColor(.red)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
+                // Bottom Button
+                VStack(spacing: 15) {
+                    Button(action: {
+                        onboardingViewModel.completeOnboarding()
+                    }) {
+                        HStack {
+                            if onboardingViewModel.isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
+                            }
+                            
+                            Text(onboardingViewModel.isLoading ? "Configuration..." : "Let's Go!")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(OnboardingColors.primary)
+                        .cornerRadius(25)
+                        .shadow(color: OnboardingColors.primary.opacity(0.3), radius: 10, x: 0, y: 5)
+                    }
+                    .disabled(onboardingViewModel.isLoading)
+                    .padding(.horizontal, 40)
+                    
+                    if let errorMessage = onboardingViewModel.errorMessage {
+                        Text(errorMessage)
+                            .font(.system(size: 14))
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                    }
                 }
+                .padding(.bottom, 30)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 30)
         }
-        .background(Color(.systemBackground))
         .navigationBarHidden(true)
     }
     
@@ -195,8 +195,9 @@ struct InfoRow: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 16)
-        .background(Color(.systemGray6))
+        .background(Color.orange.opacity(0.05))
         .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
     }
 }
 
