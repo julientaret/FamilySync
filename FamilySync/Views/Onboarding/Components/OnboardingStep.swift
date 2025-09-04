@@ -10,19 +10,26 @@ import SwiftUI
 struct OnboardingStep: View {
     let icon: String
     let text: String
+    let isCompleted: Bool
+    
+    init(icon: String, text: String, isCompleted: Bool = false) {
+        self.icon = icon
+        self.text = text
+        self.isCompleted = isCompleted
+    }
     
     var body: some View {
         HStack(spacing: 16) {
             // Checkmark Icon
             Image(systemName: icon)
                 .font(.system(size: 20, weight: .medium))
-                .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.5))
+                .foregroundColor(isCompleted ? .green : OnboardingColors.primary)
                 .frame(width: 24, height: 24)
             
             // Step Text
             Text(text)
                 .font(.system(size: 18, weight: .medium, design: .rounded))
-                .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.5))
+                .foregroundColor(OnboardingColors.primary)
                 .multilineTextAlignment(.leading)
             
             Spacer()
@@ -35,7 +42,8 @@ struct OnboardingStep: View {
     VStack(spacing: 20) {
         OnboardingStep(
             icon: "checkmark.circle.fill",
-            text: "Log in with your Apple Account"
+            text: "Log in with your Apple Account",
+            isCompleted: true
         )
         
         OnboardingStep(

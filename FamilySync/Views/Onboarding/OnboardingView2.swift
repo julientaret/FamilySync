@@ -1,5 +1,5 @@
 //
-//  OnboardingView.swift
+//  OnboardingView2.swift
 //  FamilySync
 //
 //  Created by Julien TARET on 02/09/2025.
@@ -7,10 +7,8 @@
 
 import SwiftUI
 
-struct OnboardingView1: View {
-    @EnvironmentObject var authService: AuthService
+struct OnboardingView2: View {
     @EnvironmentObject var onboardingViewModel: OnboardingViewModel
-    @State private var showSignIn = false
     
     var body: some View {
         ZStack {
@@ -19,13 +17,14 @@ struct OnboardingView1: View {
             
             VStack(spacing: 40) {
                 // Title
-                OnboardingTitle(firstLine: "Start with", secondLine: "FamilySync")
+                OnboardingTitle(firstLine: "Create Your", secondLine: "Family")
                 
                 // Steps
                 VStack(spacing: 20) {
                     OnboardingStep(
                         icon: "checkmark.circle.fill",
-                        text: "Log in with your Apple Account"
+                        text: "Log in with your Apple Account",
+                        isCompleted: true
                     )
                     
                     OnboardingStep(
@@ -38,30 +37,34 @@ struct OnboardingView1: View {
                         text: "Set your profile"
                     )
                 }
-                                
+                
+                
                 // Family Illustration
-                Image("onboard1")
+                Image("onboard2")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(height: 300)
+                    .frame(height: 200)
                     .padding(.horizontal, 40)
-                
-                
-                // Sign In Button
-                AppleSignInButton()
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 40)
-            }
-        }
-        .onReceive(authService.$isAuthenticated) { isAuthenticated in
-            if isAuthenticated {
-                onboardingViewModel.handleAuthenticationSuccess()
+                                
+                // Action Buttons
+                VStack(spacing: 16) {
+                    OnboardingButtonStyles.primaryButton("Create Family") {
+                        // TODO: Handle create family action
+                    }
+                    
+                    OnboardingTextStyles.separator("Or")
+                    
+                    OnboardingButtonStyles.secondaryButton("Join A Family") {
+                        // TODO: Handle join family action
+                    }
+                }
+                .padding(.bottom, 40)
             }
         }
     }
 }
 
 #Preview {
-    OnboardingView1()
-        .environmentObject(AuthService.shared)
+    OnboardingView2()
+        .environmentObject(OnboardingViewModel())
 }

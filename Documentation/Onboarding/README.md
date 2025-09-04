@@ -1,118 +1,107 @@
-# Onboarding - FamilySync
+# Onboarding Styles Refactoring
 
 ## Vue d'ensemble
 
-L'onboarding de FamilySync est l'écran d'accueil qui s'affiche lors de la première utilisation de l'application OU si l'utilisateur n'est pas authentifié. Il guide l'utilisateur à travers les étapes nécessaires pour commencer à utiliser l'application.
+Ce document décrit la refactorisation des styles d'onboarding pour améliorer la maintenabilité et la réutilisabilité du code.
 
-## Architecture
+## Composants créés
 
-### Structure des fichiers
+### 1. OnboardingStyles.swift
 
-```
-Views/
-├── Onboarding/
-│   ├── OnboardingView1.swift         # Vue principale (première vue)
-│   ├── OnboardingViewModel.swift     # Logique métier
-│   └── Components/                   # Composants spécifiques à l'onboarding
-│       └── OnboardingStep.swift      # Composant pour chaque étape
-```
+Fichier centralisé contenant tous les styles réutilisables pour l'onboarding :
 
-### Composants
+#### Couleurs (`OnboardingColors`)
+- `primary` : Couleur principale (orange/coral)
+- `secondary` : Couleur secondaire (teal)
+- `backgroundGradient` : Dégradé de fond
 
-#### 1. OnboardingView1
-- **Responsabilité** : Affichage principal de l'onboarding (première vue)
-- **Fonctionnalités** :
-  - Fond peach chaleureux
-  - Titre "Start with FamilySync"
-  - Liste des étapes avec checkmarks
-  - Illustration `family_onboard`
-  - Bouton Sign In With Apple
-  - Gestion de l'authentification réussie
+#### Styles de texte (`OnboardingTextStyles`)
+- `title()` : Titre principal
+- `largeTitle()` : Grand titre
+- `description()` : Texte descriptif
+- `separator()` : Séparateur "Or"
 
-#### 2. OnboardingViewModel
-- **Responsabilité** : Logique métier de l'onboarding
-- **Fonctionnalités** :
-  - Vérification du statut d'onboarding
-  - Gestion de la première utilisation
-  - Gestion de l'état d'authentification
-  - Marquage de l'onboarding comme terminé
+#### Styles de boutons (`OnboardingButtonStyles`)
+- `primaryButton()` : Bouton principal
+- `secondaryButton()` : Bouton secondaire
 
-#### 3. OnboardingStep
-- **Responsabilité** : Affichage d'une étape individuelle
-- **Éléments** :
-  - Icône de checkmark
-  - Texte descriptif
-  - Couleur orange cohérente avec le design
+#### Composants réutilisables
+- `OnboardingBackground` : Arrière-plan avec dégradé
+- `OnboardingTitle` : Titre avec ombre
 
-## Logique de Navigation
+### 2. OnboardingView2.swift
 
-### Conditions d'affichage
-L'onboarding s'affiche dans deux cas :
-1. **Première utilisation** : L'utilisateur n'a jamais vu l'onboarding
-2. **Non authentifié** : L'utilisateur n'est pas connecté
+Deuxième écran d'onboarding créé avec les nouveaux composants :
+- Titre "Create Your Family"
+- Description des fonctionnalités familiales
+- Liste des fonctionnalités avec icônes
+- Boutons "Create Family" et "Join A Family"
 
-### Flux utilisateur
-1. **Splash Screen** → **Onboarding** (si première utilisation ou non authentifié)
-2. **Onboarding** → **Sign In With Apple** (quand l'utilisateur clique sur le bouton)
-3. **Authentification réussie** → **Écran principal** (automatique)
+## Avantages de la refactorisation
 
-## Design
+### 1. Cohérence visuelle
+- Tous les écrans d'onboarding utilisent les mêmes styles
+- Changements globaux facilités
 
-### Couleurs
-- **Fond** : Peach chaleureux (`Color(red: 0.98, green: 0.95, blue: 0.92)`)
-- **Titre** : Orange (`Color(red: 1.0, green: 0.6, blue: 0.3)`)
-- **Texte des étapes** : Orange cohérent
-- **Icônes** : Gris pour les checkmarks
+### 2. Maintenabilité
+- Styles centralisés dans un seul fichier
+- Réduction de la duplication de code
 
-### Typographie
-- **Titre** : `system(size: 32, weight: .bold, design: .rounded)`
-- **Étapes** : `system(size: 18, weight: .medium, design: .rounded)`
+### 3. Réutilisabilité
+- Composants modulaires facilement réutilisables
+- Nouveaux écrans d'onboarding plus rapides à créer
 
-### Espacement
-- **VStack principal** : 40 points entre les sections
-- **Étapes** : 20 points entre chaque étape
-- **Padding horizontal** : 40 points pour les marges
+### 4. Lisibilité
+- Code plus propre et organisé
+- Séparation claire entre logique et présentation
 
-## Intégration
+## Utilisation
 
-### Dans FamilySyncApp.swift
+### Pour créer un nouvel écran d'onboarding :
+
 ```swift
-if onboardingViewModel.shouldShowOnboarding {
-    OnboardingView1()
-        .environmentObject(authService)
-        .environmentObject(onboardingViewModel)
-} else {
-    ContentView()
-        .environmentObject(appwriteService)
-        .environmentObject(authService)
+struct OnboardingView3: View {
+    var body: some View {
+        ZStack {
+            OnboardingBackground()
+            
+            VStack(spacing: 40) {
+                OnboardingTitle(firstLine: "Titre", secondLine: "Principal")
+                
+                OnboardingTextStyles.description("Description...")
+                
+                // Contenu spécifique...
+                
+                OnboardingButtonStyles.primaryButton("Action") {
+                    // Logique...
+                }
+            }
+        }
+    }
 }
 ```
 
-### Gestion de l'authentification
-L'onboarding écoute les changements d'état d'authentification via `onReceive(authService.$isAuthenticated)` et appelle automatiquement `onboardingViewModel.handleAuthenticationSuccess()` quand l'utilisateur se connecte avec succès.
+## Migration effectuée
 
-## Tests
+### OnboardingView1.swift
+- ✅ Utilise `OnboardingBackground()`
+- ✅ Utilise `OnboardingTitle()`
+- ✅ Styles cohérents avec le nouveau système
 
-### Scénarios à tester
-1. **Première utilisation** : L'onboarding s'affiche
-2. **Utilisateur non authentifié** : L'onboarding s'affiche
-3. **Authentification réussie** : Transition vers l'écran principal
-4. **Utilisateur déjà authentifié** : Pas d'onboarding
+### OnboardingStep.swift
+- ✅ Utilise `OnboardingColors.primary`
+- ✅ Maintient la même structure
 
-### Preview
-```swift
-#Preview {
-    OnboardingView1()
-        .environmentObject(AuthService.shared)
-}
-```
+## Prochaines étapes
 
-## Maintenance
+1. **Créer OnboardingView3** : Écran de configuration du profil
+2. **Ajouter des animations** : Transitions fluides entre écrans
+3. **Tests unitaires** : Tester les composants de style
+4. **Documentation** : Ajouter des exemples d'utilisation
 
-### UserDefaults Keys
-- `hasSeenOnboarding` : Bool pour marquer si l'onboarding a été vu
+## Notes techniques
 
-### Extensions futures
-- Possibilité d'ajouter plus d'étapes
-- Animations entre les étapes
-- Personnalisation selon le type d'utilisateur
+- Tous les composants respectent l'architecture MVVM
+- Utilisation de `@EnvironmentObject` pour l'injection de dépendances
+- PreviewProvider inclus pour chaque composant
+- Styles adaptés pour l'accessibilité (Dynamic Type, VoiceOver)
