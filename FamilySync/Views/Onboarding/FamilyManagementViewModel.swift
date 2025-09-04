@@ -33,7 +33,26 @@ class FamilyManagementViewModel: ObservableObject {
     /// Valide le code d'invitation
     func validateInviteCode() -> Bool {
         let trimmedCode = inviteCode.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmedCode.count == 8 && trimmedCode.allSatisfy { $0.isLetter || $0.isNumber }
+        // Le code d'invitation a le format: CODE-TIMESTAMP (ex: ABCD1234EFGH5678-ABC123)
+        // CODE: 16 caractères alphanumériques
+        // TIMESTAMP: variable, caractères alphanumériques
+        let components = trimmedCode.components(separatedBy: "-")
+        guard components.count == 2 else { return false }
+        
+        let codePart = components[0]
+        let timestampPart = components[1]
+        
+        // Vérifier que le code principal fait exactement 16 caractères et contient seulement des lettres/chiffres
+        guard codePart.count == 16 && codePart.allSatisfy({ $0.isLetter || $0.isNumber }) else {
+            return false
+        }
+        
+        // Vérifier que le timestamp contient seulement des lettres/chiffres
+        guard timestampPart.allSatisfy({ $0.isLetter || $0.isNumber }) else {
+            return false
+        }
+        
+        return true
     }
     
     /// Crée une nouvelle famille
@@ -72,7 +91,7 @@ class FamilyManagementViewModel: ObservableObject {
     /// Rejoint une famille existante
     func joinFamily(userId: String) async {
         guard validateInviteCode() else {
-            errorMessage = "Le code d'invitation doit contenir exactement 8 caractères (lettres et chiffres)"
+            errorMessage = "Le code d'invitation doit avoir le format: CODE-TIMESTAMP (ex: ABCD1234EFGH5678-ABC123)"
             showError = true
             return
         }

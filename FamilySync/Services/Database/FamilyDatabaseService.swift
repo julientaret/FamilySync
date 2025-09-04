@@ -92,39 +92,24 @@ class FamilyDatabaseService: ObservableObject {
                 throw FamilyError.invalidInviteCode
             }
             
-            // Tronquer l'ID utilisateur à 32 caractères maximum
-            let truncatedUserId = String(userId.prefix(32))
-            
             // Vérifier si l'utilisateur n'est pas déjà membre
             let currentMembers = familyDocument.data["members"]?.value as? [String] ?? []
-            if currentMembers.contains(truncatedUserId) {
+            if currentMembers.contains(userId) {
                 throw FamilyError.alreadyMember
             }
             
             // Ajouter l'utilisateur à la famille
             var updatedMembers = currentMembers
-            updatedMembers.append(truncatedUserId)
+            updatedMembers.append(userId)
             
-            // Créer les nouvelles permissions incluant le nouveau membre
-            var permissions = [
-                Permission.read(Role.user(familyDocument.data["creator_id"]?.value as? String ?? "")),
-                Permission.update(Role.user(familyDocument.data["creator_id"]?.value as? String ?? "")),
-                Permission.delete(Role.user(familyDocument.data["creator_id"]?.value as? String ?? ""))
-            ]
-            
-            // Ajouter les permissions pour tous les membres
-            for memberId in updatedMembers {
-                permissions.append(Permission.read(Role.user(memberId)))
-            }
-            
+            // Mettre à jour le document sans modifier les permissions existantes
             let updatedDocument = try await database.updateDocument(
                 databaseId: databaseId,
                 collectionId: collectionId,
                 documentId: familyDocument.id,
                 data: [
                     "members": updatedMembers
-                ],
-                permissions: permissions
+                ]
             )
             
             return Family(

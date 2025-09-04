@@ -15,6 +15,8 @@ class OnboardingViewModel: ObservableObject {
     @Published var currentOnboardingStep: Int = 1
     @Published var userName: String = ""
     @Published var userBirthday: Date = Date()
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
     
     // États pour la gestion des familles
     @Published var showCreateFamilyModal: Bool = false
@@ -26,6 +28,8 @@ class OnboardingViewModel: ObservableObject {
     private let hasSeenOnboardingKey = "hasSeenOnboarding"
     private let userNameKey = "userName"
     private let userBirthdayKey = "userBirthday"
+    
+    private let userDatabaseService = UserDatabaseService.shared
     
     func checkOnboardingStatus(authService: AuthService) {
         let hasSeenOnboarding = userDefaults.bool(forKey: hasSeenOnboardingKey)
@@ -57,16 +61,56 @@ class OnboardingViewModel: ObservableObject {
     }
     
     func handleProfileSetup(name: String, birthday: Date) {
-        userName = name
-        userBirthday = birthday
+        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Le nom ne peut pas être vide"
+            return
+        }
         
-        // Sauvegarder les données utilisateur
-        userDefaults.set(name, forKey: userNameKey)
-        userDefaults.set(birthday, forKey: userBirthdayKey)
+        isLoading = true
+        errorMessage = nil
         
-        // Passer à l'étape suivante ou terminer l'onboarding
-        currentOnboardingStep = 3
-        completeOnboarding()
+        Task {
+            do {
+                // Récupérer l'ID de l'utilisateur depuis le service d'authentification
+                guard let userId = AuthService.shared.currentUser?.id else {
+                    await MainActor.run {
+                        errorMessage = "Erreur: Utilisateur non connecté"
+                        isLoading = false
+                    }
+                    return
+                }
+                
+                // S'assurer que l'utilisateur existe en base
+                let user = try await userDatabaseService.ensureUserExists(userId: userId)
+                
+                // Mettre à jour le profil avec le nom et la date de naissance
+                let updatedUser = try await userDatabaseService.updateUserProfile(
+                    userId: userId,
+                    name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                    birthday: birthday
+                )
+                
+                await MainActor.run {
+                    userName = name
+                    userBirthday = birthday
+                    
+                    // Sauvegarder les données utilisateur localement
+                    userDefaults.set(name, forKey: userNameKey)
+                    userDefaults.set(birthday, forKey: userBirthdayKey)
+                    
+                    // Passer à l'étape suivante ou terminer l'onboarding
+                    currentOnboardingStep = 3
+                    completeOnboarding()
+                    isLoading = false
+                }
+                
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Erreur lors de la sauvegarde: \(error.localizedDescription)"
+                    isLoading = false
+                }
+            }
+        }
     }
     
     func nextStep() {

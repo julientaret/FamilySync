@@ -175,3 +175,101 @@ L'onboarding s'affiche si:
 - Gestion d'état plus robuste avec Combine
 - Tests automatisés complets
 - Analytics pour mesurer l'engagement utilisateur
+
+# Onboarding - Étape 3 : Configuration du Profil Utilisateur
+
+## Vue d'ensemble
+
+L'étape 3 de l'onboarding permet à l'utilisateur de configurer son profil en saisissant son nom et sa date de naissance. Ces informations sont ensuite enregistrées en base de données dans la table `users`.
+
+## Fonctionnalités
+
+### Champs de saisie
+- **Nom** : Champ de texte pour saisir le nom de l'utilisateur
+- **Date de naissance** : Sélecteur de date pour choisir la date de naissance
+
+### Validation
+- Le nom ne peut pas être vide (espaces et retours à la ligne sont supprimés)
+- La date de naissance est toujours valide (sélecteur natif iOS)
+
+### Enregistrement en base de données
+- Les données sont sauvegardées dans les colonnes `name` et `birthday` de la table `users`
+- La date est formatée au format `yyyy-MM-dd` pour le stockage
+- L'utilisateur doit être authentifié pour que l'enregistrement fonctionne
+
+## Architecture
+
+### Modèle de données
+```swift
+struct UserDocument: Codable {
+    let id: String
+    let userId: String
+    let familyId: String?
+    let name: String?
+    let birthday: String?
+    let createdAt: String
+    let updatedAt: String
+}
+```
+
+### Service de base de données
+- `UserDatabaseService.updateUserProfile()` : Met à jour le profil utilisateur
+- `UserDatabaseService.ensureUserExists()` : S'assure que l'utilisateur existe en base
+
+### ViewModel
+- `OnboardingViewModel.handleProfileSetup()` : Gère la logique de sauvegarde
+- États de chargement et d'erreur pour une meilleure UX
+
+## Interface utilisateur
+
+### États visuels
+- **Normal** : Bouton "It's Ok!" activé si le nom n'est pas vide
+- **Chargement** : Indicateur de progression et texte "Sauvegarde..."
+- **Erreur** : Message d'erreur affiché en rouge sous le bouton
+
+### Validation en temps réel
+- Le bouton est désactivé si le nom est vide
+- L'opacité du bouton change selon l'état de validation
+
+## Flux de données
+
+1. L'utilisateur saisit son nom et sa date de naissance
+2. Il clique sur le bouton "It's Ok!"
+3. Validation des données côté client
+4. Récupération de l'ID utilisateur depuis le service d'authentification
+5. Vérification de l'existence de l'utilisateur en base
+6. Mise à jour du profil avec les nouvelles données
+7. Sauvegarde locale des données
+8. Passage à l'étape suivante ou fin de l'onboarding
+
+## Gestion des erreurs
+
+### Types d'erreurs
+- **Nom vide** : "Le nom ne peut pas être vide"
+- **Utilisateur non connecté** : "Erreur: Utilisateur non connecté"
+- **Erreur réseau/base de données** : Message d'erreur spécifique
+
+### Récupération
+- Les erreurs sont affichées à l'utilisateur
+- L'état de chargement est réinitialisé
+- L'utilisateur peut réessayer
+
+## Sécurité
+
+- Validation côté client et serveur
+- Utilisation de l'ID utilisateur authentifié
+- Formatage sécurisé des dates
+- Nettoyage des espaces dans le nom
+
+## Tests
+
+### Tests unitaires recommandés
+- Validation du nom (vide, espaces, caractères spéciaux)
+- Formatage des dates
+- Gestion des erreurs réseau
+- États de chargement
+
+### Tests d'intégration
+- Flux complet de sauvegarde
+- Synchronisation avec la base de données
+- Persistance locale des données

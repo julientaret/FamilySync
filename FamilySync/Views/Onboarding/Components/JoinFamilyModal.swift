@@ -33,17 +33,17 @@ struct JoinFamilyModal: View {
                             .font(.headline)
                             .foregroundColor(.primary)
                         
-                        TextField("Ex: ABC12345", text: $familyViewModel.inviteCode)
+                        TextField("Ex: ABCD1234EFGH5678-ABC123", text: $familyViewModel.inviteCode)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .autocapitalization(.allCharacters)
                             .disableAutocorrection(true)
                             .onChange(of: familyViewModel.inviteCode) { newValue in
-                                // Convertir en majuscules et limiter à 8 caractères
-                                familyViewModel.inviteCode = String(newValue.uppercased().prefix(8))
+                                // Convertir en majuscules
+                                familyViewModel.inviteCode = newValue.uppercased()
                             }
                         
                         if !familyViewModel.inviteCode.isEmpty && !familyViewModel.validateInviteCode() {
-                            Text("Le code doit contenir exactement 8 caractères (lettres et chiffres)")
+                            Text("Le code doit avoir le format: CODE-TIMESTAMP (ex: ABCD1234EFGH5678-ABC123)")
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }

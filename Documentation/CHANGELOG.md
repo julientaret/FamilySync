@@ -5,6 +5,62 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-09-04
+
+### 🔧 Modifié
+- **Simplification de la gestion des permissions** : Suppression de la logique complexe de permissions dans `joinFamily()` pour éviter les erreurs de format
+- **Mise à jour sans permissions** : Utilisation de `updateDocument()` sans paramètre `permissions` pour préserver les permissions existantes
+
+### 🐛 Corrigé
+- **Erreur de permissions lors de la jointure** : L'erreur "Permissions must be one of: (any, users, user:apple_3f201280b-becb1a222809532d658a6, user:apple_3f201280b-becb1a222809532d658a6/unverified, users/unverified)" lors de la jointure d'une famille
+- **Format d'ID utilisateur incorrect** : Suppression de la troncature d'ID utilisateur qui causait des problèmes de permissions
+- **Gestion des permissions complexes** : Simplification pour éviter les conflits avec le format attendu par Appwrite
+
+### 📚 Documentation
+- **Gestion des permissions** : Clarification de l'approche simplifiée pour les permissions de famille
+
+## [1.1.1] - 2025-09-04
+
+### 🔧 Modifié
+- **Correction du format des codes d'invitation** : Mise à jour de la validation pour accepter le format correct `CODE-TIMESTAMP`
+- **Suppression de la limitation à 8 caractères** : Le champ de saisie accepte maintenant la longueur complète du code d'invitation
+- **Mise à jour des messages d'erreur** : Messages plus clairs expliquant le format attendu
+
+### 🐛 Corrigé
+- **Limitation à 8 caractères** : Le champ de saisie pour rejoindre une famille limitait incorrectement à 8 caractères
+- **Incohérence de validation** : La validation attendait 8 caractères alors que les codes générés font 16+ caractères
+- **Messages d'erreur confus** : Messages ne correspondant pas au format réel des codes d'invitation
+
+### 📚 Documentation
+- **Format des codes d'invitation** : Clarification du format `CODE-TIMESTAMP` (ex: ABCD1234EFGH5678-ABC123)
+
+## [1.1.0] - 2025-09-04
+
+### 🎉 Ajouté
+- **Enregistrement du profil utilisateur** : Sauvegarde du nom et de la date de naissance en base de données
+- **Colonnes utilisateur** : Ajout des champs `name` et `birthday` dans la table `users`
+- **Service de mise à jour de profil** : `UserDatabaseService.updateUserProfile()` pour sauvegarder les données
+- **Validation des données** : Contrôles côté client et serveur pour le nom et la date
+- **États de chargement** : Indicateur de progression pendant la sauvegarde
+- **Gestion d'erreurs** : Messages d'erreur spécifiques pour différents cas d'usage
+- **Documentation onboarding** : Guide complet de l'étape 3 de configuration du profil
+
+### 🔧 Modifié
+- **Modèle UserDocument** : Ajout des propriétés `name` et `birthday`
+- **OnboardingViewModel** : Intégration de la logique de sauvegarde en base de données
+- **OnboardingView3** : Interface utilisateur avec états de chargement et d'erreur
+- **UserDatabaseService** : Mise à jour de toutes les méthodes pour inclure les nouveaux champs
+
+### 🛡️ Sécurité
+- **Validation des entrées** : Nettoyage des espaces dans le nom
+- **Formatage sécurisé** : Dates au format `yyyy-MM-dd` pour éviter les injections
+- **Authentification requise** : Vérification de l'utilisateur connecté avant sauvegarde
+
+### 📚 Documentation
+- **Documentation onboarding étape 3** : Guide technique complet
+- **Flux de données** : Description détaillée du processus de sauvegarde
+- **Gestion des erreurs** : Types d'erreurs et stratégies de récupération
+
 ## [1.0.0] - 2024-12-19
 
 ### 🎉 Ajouté

@@ -86,18 +86,35 @@ struct OnboardingView3: View {
                 Button(action: {
                     onboardingViewModel.handleProfileSetup(name: userName, birthday: selectedDate)
                 }) {
-                    Text("It's Ok!")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color(hex: "#e9906f"))
-                        .cornerRadius(10)
+                    HStack {
+                        if onboardingViewModel.isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                        }
+                        Text(onboardingViewModel.isLoading ? "Sauvegarde..." : "It's Ok!")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(Color(hex: "#e9906f"))
+                    .cornerRadius(10)
                 }
-                .disabled(userName.isEmpty)
-                .opacity(userName.isEmpty ? 0.6 : 1.0)
+                .disabled(userName.isEmpty || onboardingViewModel.isLoading)
+                .opacity((userName.isEmpty || onboardingViewModel.isLoading) ? 0.6 : 1.0)
                 .padding(.horizontal, 40)
-                .padding(.bottom, 40)
+                .padding(.bottom, 20)
+                
+                // Error Message
+                if let errorMessage = onboardingViewModel.errorMessage {
+                    Text(errorMessage)
+                        .font(.system(size: 14))
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                        .padding(.bottom, 20)
+                }
             }
         }
     }

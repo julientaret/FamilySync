@@ -6,6 +6,8 @@ struct UserDocument: Codable {
     let id: String
     let userId: String
     let familyId: String?
+    let name: String?
+    let birthday: String?
     let createdAt: String
     let updatedAt: String
     
@@ -13,6 +15,8 @@ struct UserDocument: Codable {
         case id = "$id"
         case userId = "user_id"
         case familyId = "family_id"
+        case name = "name"
+        case birthday = "birthday"
         case createdAt = "$createdAt"
         case updatedAt = "$updatedAt"
     }
@@ -51,6 +55,8 @@ class UserDatabaseService: ObservableObject {
                 id: document.id,
                 userId: userId,
                 familyId: nil,
+                name: nil,
+                birthday: nil,
                 createdAt: document.createdAt,
                 updatedAt: document.updatedAt
             )
@@ -72,6 +78,8 @@ class UserDatabaseService: ObservableObject {
                 id: document.id,
                 userId: document.data["user_id"]?.value as? String ?? "",
                 familyId: document.data["family_id"]?.value as? String,
+                name: document.data["name"]?.value as? String,
+                birthday: document.data["birthday"]?.value as? String,
                 createdAt: document.createdAt,
                 updatedAt: document.updatedAt
             )
@@ -95,6 +103,39 @@ class UserDatabaseService: ObservableObject {
                 id: document.id,
                 userId: document.data["user_id"]?.value as? String ?? "",
                 familyId: document.data["family_id"]?.value as? String,
+                name: document.data["name"]?.value as? String,
+                birthday: document.data["birthday"]?.value as? String,
+                createdAt: document.createdAt,
+                updatedAt: document.updatedAt
+            )
+        } catch {
+            throw error
+        }
+    }
+    
+    /// Met à jour le profil utilisateur avec le nom et la date de naissance
+    func updateUserProfile(userId: String, name: String, birthday: Date) async throws -> UserDocument {
+        do {
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            let birthdayString = dateFormatter.string(from: birthday)
+            
+            let document = try await database.updateDocument(
+                databaseId: databaseId,
+                collectionId: collectionId,
+                documentId: userId,
+                data: [
+                    "name": name,
+                    "birthday": birthdayString
+                ]
+            )
+            
+            return UserDocument(
+                id: document.id,
+                userId: document.data["user_id"]?.value as? String ?? "",
+                familyId: document.data["family_id"]?.value as? String,
+                name: document.data["name"]?.value as? String,
+                birthday: document.data["birthday"]?.value as? String,
                 createdAt: document.createdAt,
                 updatedAt: document.updatedAt
             )
@@ -119,6 +160,8 @@ class UserDatabaseService: ObservableObject {
                 id: document.id,
                 userId: document.data["user_id"]?.value as? String ?? "",
                 familyId: document.data["family_id"]?.value as? String,
+                name: document.data["name"]?.value as? String,
+                birthday: document.data["birthday"]?.value as? String,
                 createdAt: document.createdAt,
                 updatedAt: document.updatedAt
             )
