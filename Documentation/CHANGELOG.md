@@ -5,6 +5,69 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2025-09-04
+
+### 🔧 Modifié
+- **Amélioration de la vérification de familyId** : La méthode `isUserInFamilyAsync()` vérifie maintenant si le `familyId` n'est pas vide en plus de vérifier s'il n'est pas `nil`
+- **Vérification de chaîne vide** : Ajout de `trimmingCharacters(in: .whitespacesAndNewlines).isEmpty` pour détecter les chaînes vides ou composées uniquement d'espaces
+
+### 🐛 Corrigé
+- **Problème de détection de famille** : L'utilisateur avait un `familyId` valide (68b98ba46881fc73e38d) mais la méthode ne vérifiait que si le champ était `nil`, pas s'il était vide
+- **Logique de vérification incomplète** : La méthode ne prenait pas en compte les cas où le champ existe mais contient une chaîne vide
+
+### 📚 Documentation
+- **Vérification de familyId** : Clarification de la logique de vérification pour les champs non-null mais potentiellement vides
+
+## [1.3.1] - 2025-09-04
+
+### 🔧 Modifié
+- **Amélioration de la détection de famille** : Correction de la logique asynchrone pour détecter correctement l'appartenance à une famille
+- **Méthode isUserInFamilyAsync()** : Nouvelle méthode asynchrone pour vérifier l'appartenance à une famille directement en base de données
+- **Méthode checkAndSkipStepsAsync()** : Version asynchrone qui attend le chargement des données avant de vérifier les étapes
+
+### 🐛 Corrigé
+- **Problème de détection de famille** : L'étape 2 s'affichait même quand l'utilisateur était déjà dans une famille
+- **Timing des vérifications** : Les vérifications se faisaient avant que les données de famille soient chargées
+- **Logique de passage automatique** : Amélioration pour s'assurer que les données sont disponibles avant de prendre les décisions
+
+### 📚 Documentation
+- **Détection asynchrone** : Clarification de la logique de détection de famille en base de données
+
+## [1.3.0] - 2025-09-04
+
+### 🎉 Ajouté
+- **Passage automatique des étapes** : L'onboarding passe automatiquement les étapes 2 et 3 si l'utilisateur a déjà les informations nécessaires
+- **Vérification de l'appartenance à une famille** : L'étape 2 est passée si l'utilisateur est déjà membre d'une famille
+- **Vérification du profil utilisateur** : L'étape 3 est passée si l'utilisateur a déjà saisi son nom et sa date de naissance
+- **Affichage des informations existantes** : Affichage des données déjà saisies dans les étapes correspondantes
+- **Méthodes de vérification** : `isUserInFamily()` et `hasUserProfile()` dans OnboardingViewModel
+
+### 🔧 Modifié
+- **OnboardingViewModel** : Ajout de la logique de vérification et de passage automatique des étapes
+- **OnboardingView2** : Affichage conditionnel selon l'appartenance à une famille
+- **OnboardingView3** : Affichage conditionnel selon l'existence du profil utilisateur
+- **Initialisation de l'onboarding** : Chargement automatique des données utilisateur au démarrage
+
+### 📚 Documentation
+- **Flux d'onboarding intelligent** : Documentation du nouveau système de passage automatique
+- **Logique de vérification** : Explication des conditions de passage des étapes
+
+## [1.2.0] - 2025-09-04
+
+### 🎉 Ajouté
+- **OnboardingView4** : Nouvelle vue de récapitulatif avec toutes les informations utilisateur
+- **Étape de finalisation** : Écran de récapitulatif avant de terminer l'onboarding
+- **Composant InfoRow** : Affichage structuré des informations avec icônes et couleurs
+- **Bouton "Let's Go!"** : Finalisation de l'onboarding avec sauvegarde des données
+
+### 🔧 Modifié
+- **Navigation onboarding** : Ajout de l'étape 4 dans le flux de navigation
+- **OnboardingViewModel** : Mise à jour pour passer à l'étape 4 au lieu de terminer directement
+- **Méthode completeOnboarding()** : Amélioration avec sauvegarde complète des données
+
+### 📚 Documentation
+- **Flux onboarding complet** : Documentation du nouveau flux en 4 étapes
+
 ## [1.1.2] - 2025-09-04
 
 ### 🔧 Modifié

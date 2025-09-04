@@ -42,6 +42,10 @@ struct FamilySyncApp: App {
                             OnboardingView3()
                                 .environmentObject(authService)
                                 .environmentObject(onboardingViewModel)
+                        case 4:
+                            OnboardingView4(onboardingViewModel: onboardingViewModel)
+                                .environmentObject(authService)
+                                .environmentObject(onboardingViewModel)
                         default:
                             OnboardingView1()
                                 .environmentObject(authService)
@@ -55,7 +59,10 @@ struct FamilySyncApp: App {
                 }
             }
             .onAppear {
-                onboardingViewModel.checkOnboardingStatus(authService: authService)
+                print("🚨 [ALERT] FamilySyncApp onAppear!")
+                Task {
+                    await onboardingViewModel.checkOnboardingStatusAsync(authService: authService)
+                }
             }
         }
     }

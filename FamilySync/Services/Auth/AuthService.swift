@@ -103,6 +103,7 @@ class AuthService: ObservableObject {
     // MARK: - Gestion des sessions
     
     private func checkExistingSession() {
+        print("🚨 [ALERT] AuthService.checkExistingSession() appelée")
         Task {
             await MainActor.run {
                 isLoading = true
@@ -110,12 +111,21 @@ class AuthService: ObservableObject {
             
             do {
                 // Essayer de récupérer l'utilisateur connecté
+                print("🚨 [ALERT] Tentative de récupération de l'utilisateur Apple")
                 try await appleSignInService.fetchCurrentUser()
                 
                 await MainActor.run {
                     isLoading = false
+                    // Vérifier si l'utilisateur a été récupéré
+                    if currentUser != nil {
+                        print("🚨 [ALERT] Utilisateur trouvé, mise à jour de isAuthenticated")
+                        isAuthenticated = true
+                    } else {
+                        print("🚨 [ALERT] Aucun utilisateur trouvé")
+                    }
                 }
             } catch {
+                print("🚨 [ALERT] Erreur lors de la récupération de l'utilisateur: \(error)")
                 await MainActor.run {
                     isLoading = false
                 }

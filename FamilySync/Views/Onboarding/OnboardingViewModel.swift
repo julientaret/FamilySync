@@ -30,10 +30,15 @@ class OnboardingViewModel: ObservableObject {
     private let userBirthdayKey = "userBirthday"
     
     private let userDatabaseService = UserDatabaseService.shared
+    private let familyDatabaseService = FamilyDatabaseService.shared
     
     func checkOnboardingStatus(authService: AuthService) {
+        print("🚨 [ALERT] checkOnboardingStatus appelée!")
         let hasSeenOnboarding = userDefaults.bool(forKey: hasSeenOnboardingKey)
         let isUserAuthenticated = authService.isAuthenticated
+        
+        print("🚨 [ALERT] hasSeenOnboarding: \(hasSeenOnboarding)")
+        print("🚨 [ALERT] isUserAuthenticated: \(isUserAuthenticated)")
         
         // Afficher l'onboarding si :
         // 1. Première utilisation (n'a jamais vu l'onboarding)
@@ -41,18 +46,50 @@ class OnboardingViewModel: ObservableObject {
         shouldShowOnboarding = !hasSeenOnboarding || !isUserAuthenticated
         isAuthenticated = isUserAuthenticated
         
-        // Charger les données utilisateur si elles existent
-        if let savedName = userDefaults.string(forKey: userNameKey) {
-            userName = savedName
+        print("🚨 [ALERT] shouldShowOnboarding: \(shouldShowOnboarding)")
+        
+        // Si l'utilisateur est authentifié et doit voir l'onboarding, initialiser les données
+        if isUserAuthenticated && shouldShowOnboarding {
+            print("🚨 [ALERT] Appel de initializeOnboarding()")
+            Task {
+                await initializeOnboarding()
+            }
         }
-        if let savedBirthday = userDefaults.object(forKey: userBirthdayKey) as? Date {
-            userBirthday = savedBirthday
+    }
+    
+    /// Version asynchrone qui attend que l'authentification soit vérifiée
+    func checkOnboardingStatusAsync(authService: AuthService) async {
+        print("🚨 [ALERT] checkOnboardingStatusAsync appelée!")
+        
+        // Attendre un peu pour que checkExistingSession() se termine
+        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 seconde
+        
+        let hasSeenOnboarding = userDefaults.bool(forKey: hasSeenOnboardingKey)
+        let isUserAuthenticated = authService.isAuthenticated
+        
+        print("🚨 [ALERT] checkOnboardingStatusAsync - hasSeenOnboarding: \(hasSeenOnboarding)")
+        print("🚨 [ALERT] checkOnboardingStatusAsync - isUserAuthenticated: \(isUserAuthenticated)")
+        
+        // Afficher l'onboarding si :
+        // 1. Première utilisation (n'a jamais vu l'onboarding)
+        // 2. OU si l'utilisateur n'est pas authentifié
+        shouldShowOnboarding = !hasSeenOnboarding || !isUserAuthenticated
+        isAuthenticated = isUserAuthenticated
+        
+        print("🚨 [ALERT] checkOnboardingStatusAsync - shouldShowOnboarding: \(shouldShowOnboarding)")
+        
+        // Si l'utilisateur est authentifié et doit voir l'onboarding, initialiser les données
+        if isUserAuthenticated && shouldShowOnboarding {
+            await initializeOnboarding()
         }
     }
     
     func completeOnboarding() {
         userDefaults.set(true, forKey: hasSeenOnboardingKey)
+        userDefaults.set(userName, forKey: userNameKey)
+        userDefaults.set(userBirthday, forKey: userBirthdayKey)
         shouldShowOnboarding = false
+        isAuthenticated = true
     }
     
     func handleAuthenticationSuccess() {
@@ -98,9 +135,8 @@ class OnboardingViewModel: ObservableObject {
                     userDefaults.set(name, forKey: userNameKey)
                     userDefaults.set(birthday, forKey: userBirthdayKey)
                     
-                    // Passer à l'étape suivante ou terminer l'onboarding
-                    currentOnboardingStep = 3
-                    completeOnboarding()
+                    // Passer à l'étape 4 (récapitulatif)
+                    currentOnboardingStep = 4
                     isLoading = false
                 }
                 
@@ -121,5 +157,126 @@ class OnboardingViewModel: ObservableObject {
         if currentOnboardingStep > 1 {
             currentOnboardingStep -= 1
         }
+    }
+    
+    /// Vérifie si l'utilisateur est déjà dans une famille
+    func isUserInFamily() -> Bool {
+        return currentFamily != nil
+    }
+    
+    /// Vérifie si l'utilisateur est déjà dans une famille (version asynchrone)
+    func isUserInFamilyAsync() async -> Bool {
+        guard let userId = AuthService.shared.currentUser?.id else { 
+            print("🔍 [DEBUG] isUserInFamilyAsync: Pas d'utilisateur connecté")
+            return false 
+        }
+        
+        print("🔍 [DEBUG] isUserInFamilyAsync: Vérification pour userId: \(userId)")
+        
+        do {
+            let user = try await userDatabaseService.getUser(userId: userId)
+            print("🔍 [DEBUG] isUserInFamilyAsync: Utilisateur récupéré: \(user?.id ?? "nil")")
+            print("🔍 [DEBUG] isUserInFamilyAsync: familyId: \(user?.familyId ?? "nil")")
+            
+            // Vérifier si familyId existe et n'est pas vide
+            if let familyId = user?.familyId {
+                let trimmedFamilyId = familyId.trimmingCharacters(in: .whitespacesAndNewlines)
+                let isEmpty = trimmedFamilyId.isEmpty
+                print("🔍 [DEBUG] isUserInFamilyAsync: familyId après trim: '\(trimmedFamilyId)'")
+                print("🔍 [DEBUG] isUserInFamilyAsync: isEmpty: \(isEmpty)")
+                return !isEmpty
+            }
+            print("🔍 [DEBUG] isUserInFamilyAsync: familyId est nil")
+            return false
+        } catch {
+            print("🔍 [DEBUG] isUserInFamilyAsync: Erreur lors de la vérification: \(error)")
+            return false
+        }
+    }
+    
+    /// Vérifie si l'utilisateur a déjà saisi son nom et sa date de naissance
+    func hasUserProfile() -> Bool {
+        let savedName = userDefaults.string(forKey: userNameKey) ?? ""
+        let savedBirthday = userDefaults.object(forKey: userBirthdayKey) as? Date
+        return !savedName.isEmpty && savedBirthday != nil
+    }
+    
+    /// Vérifie et passe automatiquement les étapes si nécessaire
+    func checkAndSkipSteps() {
+        // Si l'utilisateur est déjà dans une famille, passer l'étape 2
+        if currentOnboardingStep == 2 && isUserInFamily() {
+            currentOnboardingStep = 3
+        }
+        
+        // Si l'utilisateur a déjà un profil, passer l'étape 3
+        if currentOnboardingStep == 3 && hasUserProfile() {
+            currentOnboardingStep = 4
+        }
+    }
+    
+    /// Vérifie et passe automatiquement les étapes si nécessaire (version asynchrone)
+    func checkAndSkipStepsAsync() async {
+        print("🔍 [DEBUG] checkAndSkipStepsAsync: Début de la vérification")
+        print("🔍 [DEBUG] checkAndSkipStepsAsync: currentOnboardingStep: \(currentOnboardingStep)")
+        
+        // Charger les données de famille d'abord
+        await loadFamilyData()
+        
+        // Vérifier si l'utilisateur est dans une famille
+        let isInFamily = await isUserInFamilyAsync()
+        print("🔍 [DEBUG] checkAndSkipStepsAsync: isInFamily: \(isInFamily)")
+        
+        // Si l'utilisateur est déjà dans une famille, passer l'étape 2
+        if currentOnboardingStep == 2 && isInFamily {
+            print("🔍 [DEBUG] checkAndSkipStepsAsync: Passage de l'étape 2 à 3")
+            currentOnboardingStep = 3
+        }
+        
+        // Si l'utilisateur a déjà un profil, passer l'étape 3
+        if currentOnboardingStep == 3 && hasUserProfile() {
+            print("🔍 [DEBUG] checkAndSkipStepsAsync: Passage de l'étape 3 à 4")
+            currentOnboardingStep = 4
+        }
+        
+        print("🔍 [DEBUG] checkAndSkipStepsAsync: Fin de la vérification, currentOnboardingStep: \(currentOnboardingStep)")
+    }
+    
+    /// Initialise les données utilisateur depuis UserDefaults
+    func loadUserData() {
+        userName = userDefaults.string(forKey: userNameKey) ?? ""
+        if let savedBirthday = userDefaults.object(forKey: userBirthdayKey) as? Date {
+            userBirthday = savedBirthday
+        }
+    }
+    
+    /// Charge les données de famille depuis la base de données
+    func loadFamilyData() async {
+        guard let userId = AuthService.shared.currentUser?.id else { return }
+        
+        do {
+            let user = try await userDatabaseService.getUser(userId: userId)
+            if let user = user, let familyId = user.familyId {
+                // Récupérer les informations de la famille
+                let family = try await familyDatabaseService.getFamily(familyId: familyId)
+                await MainActor.run {
+                    currentFamily = family
+                }
+            }
+        } catch {
+            print("Erreur lors du chargement des données de famille: \(error)")
+        }
+    }
+    
+    /// Initialise l'onboarding avec vérification automatique des étapes
+    func initializeOnboarding() async {
+        print("🔍 [DEBUG] initializeOnboarding: Début de l'initialisation")
+        
+        // Charger les données utilisateur
+        loadUserData()
+        
+        // Charger les données de famille et vérifier les étapes
+        await checkAndSkipStepsAsync()
+        
+        print("🔍 [DEBUG] initializeOnboarding: Fin de l'initialisation, currentOnboardingStep: \(currentOnboardingStep)")
     }
 }

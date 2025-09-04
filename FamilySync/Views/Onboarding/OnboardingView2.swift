@@ -32,7 +32,7 @@ struct OnboardingView2: View {
                     OnboardingStep(
                         icon: "checkmark.circle.fill",
                         text: "Create or join a Family",
-                        isCompleted: false
+                        isCompleted: onboardingViewModel.isUserInFamily()
                     )
                     
                     OnboardingStep(
@@ -49,37 +49,66 @@ struct OnboardingView2: View {
                     .frame(height: 250)
                     .padding(.horizontal, 40)
                 
-                // Action Buttons
-                VStack(spacing: 16) {
-                    Button(action: {
-                        familyViewModel.showCreateFamilyModal = true
-                    }) {
-                        Text("Create New Family")
+                // Si l'utilisateur est déjà dans une famille
+                if onboardingViewModel.isUserInFamily() {
+                    VStack(spacing: 16) {
+                        Text("✅ Vous êtes déjà dans une famille !")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(Color(hex: "#e9906f"))
-                            .cornerRadius(25)
+                            .foregroundColor(.green)
+                            .multilineTextAlignment(.center)
+                        
+                        if let family = onboardingViewModel.currentFamily {
+                            Text("Famille : \(family.name)")
+                                .font(.system(size: 16))
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Button(action: {
+                            onboardingViewModel.nextStep()
+                        }) {
+                            Text("Continuer")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(Color(hex: "#e9906f"))
+                                .cornerRadius(25)
+                        }
+                        .padding(.horizontal, 40)
                     }
-                    
-                    Button(action: {
-                        familyViewModel.showJoinFamilyModal = true
-                    }) {
-                        Text("Join Existing Family")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(Color(hex: "#e9906f"))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(Color.white)
-                            .cornerRadius(25)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 25)
-                                    .stroke(Color(hex: "#e9906f"), lineWidth: 2)
-                            )
+                } else {
+                    // Action Buttons
+                    VStack(spacing: 16) {
+                        Button(action: {
+                            familyViewModel.showCreateFamilyModal = true
+                        }) {
+                            Text("Create New Family")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(Color(hex: "#e9906f"))
+                                .cornerRadius(25)
+                        }
+                        
+                        Button(action: {
+                            familyViewModel.showJoinFamilyModal = true
+                        }) {
+                            Text("Join Existing Family")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(Color(hex: "#e9906f"))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(Color.white)
+                                .cornerRadius(25)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .stroke(Color(hex: "#e9906f"), lineWidth: 2)
+                                )
+                        }
                     }
+                    .padding(.horizontal, 40)
                 }
-                .padding(.horizontal, 40)
                 
                 Spacer()
             }

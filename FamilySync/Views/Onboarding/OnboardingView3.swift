@@ -13,6 +13,12 @@ struct OnboardingView3: View {
     @State private var userName: String = ""
     @State private var selectedDate = Date()
     
+    private func formatDate(_ date: Date) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .long
+        return dateFormatter.string(from: date)
+    }
+    
     var body: some View {
         ZStack {
             // Background
@@ -39,7 +45,7 @@ struct OnboardingView3: View {
                     OnboardingStep(
                         icon: "checkmark.circle.fill",
                         text: "Set your profile",
-                        isCompleted: false
+                        isCompleted: onboardingViewModel.hasUserProfile()
                     )
                 }
                 
@@ -50,70 +56,103 @@ struct OnboardingView3: View {
                     .frame(height: 200)
                     .padding(.horizontal, 40)
                 
-                // Input Fields
-                VStack(spacing: 20) {
-                    // Name Input
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("What Should We Call You?")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(OnboardingColors.primary)
-                        
-                        TextField("Enter your name", text: $userName)
-                            .textFieldStyle(OnboardingTextFieldStyle())
-                    }
-                    
-                    // Birthday Input
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("When Is Your Birthday?")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(OnboardingColors.primary)
-                        
-                        DatePicker("", selection: $selectedDate, displayedComponents: [.date])
-                            .datePickerStyle(.compact)
-                            .labelsHidden()
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .contentShape(Rectangle()) // Cette ligne rend toute la zone cliquable
-                            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
-                    }
-                }
-                .padding(.horizontal, 40)
-                                
-                // Continue Button
-                Button(action: {
-                    onboardingViewModel.handleProfileSetup(name: userName, birthday: selectedDate)
-                }) {
-                    HStack {
-                        if onboardingViewModel.isLoading {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(0.8)
-                        }
-                        Text(onboardingViewModel.isLoading ? "Sauvegarde..." : "It's Ok!")
+                // Si l'utilisateur a déjà un profil
+                if onboardingViewModel.hasUserProfile() {
+                    VStack(spacing: 16) {
+                        Text("✅ Votre profil est déjà configuré !")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(Color(hex: "#e9906f"))
-                    .cornerRadius(10)
-                }
-                .disabled(userName.isEmpty || onboardingViewModel.isLoading)
-                .opacity((userName.isEmpty || onboardingViewModel.isLoading) ? 0.6 : 1.0)
-                .padding(.horizontal, 40)
-                .padding(.bottom, 20)
-                
-                // Error Message
-                if let errorMessage = onboardingViewModel.errorMessage {
-                    Text(errorMessage)
-                        .font(.system(size: 14))
-                        .foregroundColor(.red)
-                        .multilineTextAlignment(.center)
+                            .foregroundColor(.green)
+                            .multilineTextAlignment(.center)
+                        
+                        VStack(spacing: 8) {
+                            Text("Nom : \(onboardingViewModel.userName)")
+                                .font(.system(size: 16))
+                                .foregroundColor(.secondary)
+                            
+                            Text("Date de naissance : \(formatDate(onboardingViewModel.userBirthday))")
+                                .font(.system(size: 16))
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Button(action: {
+                            onboardingViewModel.nextStep()
+                        }) {
+                            Text("Continuer")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(Color(hex: "#e9906f"))
+                                .cornerRadius(10)
+                        }
                         .padding(.horizontal, 40)
-                        .padding(.bottom, 20)
+                    }
+                } else {
+                    // Input Fields
+                    VStack(spacing: 20) {
+                        // Name Input
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("What Should We Call You?")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(OnboardingColors.primary)
+                            
+                            TextField("Enter your name", text: $userName)
+                                .textFieldStyle(OnboardingTextFieldStyle())
+                        }
+                        
+                        // Birthday Input
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("When Is Your Birthday?")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(OnboardingColors.primary)
+                            
+                            DatePicker("", selection: $selectedDate, displayedComponents: [.date])
+                                .datePickerStyle(.compact)
+                                .labelsHidden()
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(Color.white)
+                                .cornerRadius(12)
+                                .contentShape(Rectangle()) // Cette ligne rend toute la zone cliquable
+                                .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+                        }
+                    }
+                    .padding(.horizontal, 40)
+                                    
+                    // Continue Button
+                    Button(action: {
+                        onboardingViewModel.handleProfileSetup(name: userName, birthday: selectedDate)
+                    }) {
+                        HStack {
+                            if onboardingViewModel.isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
+                            }
+                            Text(onboardingViewModel.isLoading ? "Sauvegarde..." : "It's Ok!")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(Color(hex: "#e9906f"))
+                        .cornerRadius(10)
+                    }
+                    .disabled(userName.isEmpty || onboardingViewModel.isLoading)
+                    .opacity((userName.isEmpty || onboardingViewModel.isLoading) ? 0.6 : 1.0)
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 20)
+                    
+                    // Error Message
+                    if let errorMessage = onboardingViewModel.errorMessage {
+                        Text(errorMessage)
+                            .font(.system(size: 14))
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                            .padding(.bottom, 20)
+                    }
                 }
             }
         }
