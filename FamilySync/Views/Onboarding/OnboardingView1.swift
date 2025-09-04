@@ -25,17 +25,20 @@ struct OnboardingView1: View {
                 VStack(spacing: 20) {
                     OnboardingStep(
                         icon: "checkmark.circle.fill",
-                        text: "Log in with your Apple Account"
+                        text: "Log in with your Apple Account",
+                        isCompleted: false
                     )
                     
                     OnboardingStep(
                         icon: "checkmark.circle.fill",
-                        text: "Create or join a Family"
+                        text: "Create or join a Family",
+                        isCompleted: false
                     )
                     
                     OnboardingStep(
                         icon: "checkmark.circle.fill",
-                        text: "Set your profile"
+                        text: "Set your profile",
+                        isCompleted: false
                     )
                 }
                                 

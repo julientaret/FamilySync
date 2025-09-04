@@ -20,8 +20,8 @@ struct OnboardingStep: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // Checkmark Icon
-            Image(systemName: icon)
+            // Step Icon - Circle empty when not completed, checkmark when completed
+            Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 20, weight: .medium))
                 .foregroundColor(isCompleted ? .green : OnboardingColors.primary)
                 .frame(width: 24, height: 24)
@@ -48,12 +48,14 @@ struct OnboardingStep: View {
         
         OnboardingStep(
             icon: "checkmark.circle.fill",
-            text: "Create or join a Family"
+            text: "Create or join a Family",
+            isCompleted: false
         )
         
         OnboardingStep(
             icon: "checkmark.circle.fill",
-            text: "Set your profile"
+            text: "Set your profile",
+            isCompleted: false
         )
     }
     .padding()

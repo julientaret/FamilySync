@@ -28,9 +28,25 @@ struct FamilySyncApp: App {
                         }
                 } else {
                     if onboardingViewModel.shouldShowOnboarding {
-                        OnboardingView1()
-                            .environmentObject(authService)
-                            .environmentObject(onboardingViewModel)
+                        // Navigation entre les vues d'onboarding basée sur l'étape actuelle
+                        switch onboardingViewModel.currentOnboardingStep {
+                        case 1:
+                            OnboardingView1()
+                                .environmentObject(authService)
+                                .environmentObject(onboardingViewModel)
+                        case 2:
+                            OnboardingView2()
+                                .environmentObject(authService)
+                                .environmentObject(onboardingViewModel)
+                        case 3:
+                            OnboardingView3()
+                                .environmentObject(authService)
+                                .environmentObject(onboardingViewModel)
+                        default:
+                            OnboardingView1()
+                                .environmentObject(authService)
+                                .environmentObject(onboardingViewModel)
+                        }
                     } else {
                         ContentView()
                             .environmentObject(appwriteService)
