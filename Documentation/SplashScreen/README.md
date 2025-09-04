@@ -29,6 +29,7 @@ Views/
   - Dégradé de fond rose-orange
   - Affichage conditionnel des éléments selon l'état
   - Gestion de la première utilisation vs connexion
+  - **Ombre orange légère** sur le texte "FamilySync" pour améliorer la lisibilité
 
 #### 2. SplashScreenViewModel
 - **Responsabilité** : Logique métier de la splash screen

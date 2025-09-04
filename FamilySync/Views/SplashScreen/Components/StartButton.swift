@@ -22,6 +22,7 @@ struct StartButton: View {
                         .stroke(Color.white, lineWidth: 2)
                 )
         }
+        .shadow(color: Color(red: 1.0, green: 0.6, blue: 0.3).opacity(0.6), radius: 3, x: 0, y: 2)
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(1.0)
         .animation(.easeInOut(duration: 0.2), value: true)
