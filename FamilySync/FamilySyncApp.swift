@@ -11,12 +11,26 @@ import SwiftUI
 struct FamilySyncApp: App {
     @StateObject private var appwriteService = AppwriteService.shared
     @StateObject private var authService = AuthService.shared
+    @State private var showSplashScreen = true
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(appwriteService)
-                .environmentObject(authService)
+            ZStack {
+                if showSplashScreen {
+                    SplashScreenView()
+                        .environmentObject(appwriteService)
+                        .environmentObject(authService)
+                        .onReceive(NotificationCenter.default.publisher(for: .splashScreenCompleted)) { _ in
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                showSplashScreen = false
+                            }
+                        }
+                } else {
+                    ContentView()
+                        .environmentObject(appwriteService)
+                        .environmentObject(authService)
+                }
+            }
         }
     }
 }
