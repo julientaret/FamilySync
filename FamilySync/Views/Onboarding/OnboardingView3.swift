@@ -101,18 +101,14 @@ struct OnboardingView3: View {
                         }
                         
                         // Birthday Input
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("When Is Your Birthday?")
+                        HStack(spacing: 8) {
+                            Text("Your Birthday?")
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundColor(OnboardingColors.primary)
                             
                             DatePicker("", selection: $selectedDate, displayedComponents: [.date])
-                                .datePickerStyle(.compact)
-                                .labelsHidden()
-                                .padding()
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 50)
-                                .background(Color.white)
                                 .cornerRadius(12)
                                 .contentShape(Rectangle()) // Cette ligne rend toute la zone cliquable
                                 .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
