@@ -13,6 +13,7 @@ class SplashScreenViewModel: ObservableObject {
     @Published var isFirstLaunch: Bool = false
     @Published var isLoading: Bool = false
     @Published var shouldNavigateToMain: Bool = false
+    @Published var showLoginButton: Bool = false
     
     private let userDefaults = UserDefaults.standard
     private let firstLaunchKey = "hasLaunchedBefore"
@@ -24,10 +25,12 @@ class SplashScreenViewModel: ObservableObject {
             // Première utilisation
             isFirstLaunch = true
             isLoading = false
+            showLoginButton = false
         } else {
             // Pas première utilisation, on attend la connexion
             isFirstLaunch = false
             isLoading = true
+            showLoginButton = false
         }
     }
     
@@ -43,8 +46,9 @@ class SplashScreenViewModel: ObservableObject {
                         shouldNavigateToMain = true
                         NotificationCenter.default.post(name: .splashScreenCompleted, object: nil)
                     } else {
-                        // Si pas connecté, on peut afficher le bouton de connexion
+                        // Si pas connecté, on affiche le bouton de connexion
                         isLoading = false
+                        showLoginButton = true
                     }
                 }
             }
@@ -56,6 +60,11 @@ class SplashScreenViewModel: ObservableObject {
         userDefaults.set(true, forKey: firstLaunchKey)
         
         // Naviguer vers l'onboarding (pas directement vers l'écran principal)
+        NotificationCenter.default.post(name: .splashScreenCompleted, object: nil)
+    }
+    
+    func proceedToLogin() {
+        // Naviguer vers l'onboarding pour la connexion
         NotificationCenter.default.post(name: .splashScreenCompleted, object: nil)
     }
 }

@@ -56,7 +56,7 @@ struct OnboardingView3: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("What Should We Call You?")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundColor(OnboardingColors.primary)
                         
                         TextField("Enter your name", text: $userName)
                             .textFieldStyle(OnboardingTextFieldStyle())
@@ -66,17 +66,22 @@ struct OnboardingView3: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("When Is Your Birthday?")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.gray)
+                            .foregroundColor(OnboardingColors.primary)
                         
                         DatePicker("", selection: $selectedDate, displayedComponents: [.date])
-                            .datePickerStyle(OnboardingDatePickerStyle())
+                            .datePickerStyle(.compact)
                             .labelsHidden()
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.white)
+                            .cornerRadius(12)
+                            .contentShape(Rectangle()) // Cette ligne rend toute la zone cliquable
+                            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
                     }
                 }
                 .padding(.horizontal, 40)
-                
-                Spacer()
-                
+                                
                 // Continue Button
                 Button(action: {
                     onboardingViewModel.handleProfileSetup(name: userName, birthday: selectedDate)
@@ -87,7 +92,7 @@ struct OnboardingView3: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(Color(hex: "#e9906f"))
-                        .cornerRadius(25)
+                        .cornerRadius(10)
                 }
                 .disabled(userName.isEmpty)
                 .opacity(userName.isEmpty ? 0.6 : 1.0)
@@ -102,17 +107,6 @@ struct OnboardingView3: View {
 struct OnboardingTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
-            .padding()
-            .background(Color.white)
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
-    }
-}
-
-// Custom DatePicker Style
-struct OnboardingDatePickerStyle: DatePickerStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
             .padding()
             .background(Color.white)
             .cornerRadius(12)

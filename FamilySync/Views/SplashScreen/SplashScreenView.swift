@@ -50,6 +50,8 @@ struct SplashScreenView: View {
                     StartButton(action: viewModel.startApp)
                 } else if viewModel.isLoading {
                     LoadingIndicator()
+                } else if viewModel.showLoginButton {
+                    LoginButton(action: viewModel.proceedToLogin)
                 }
                 
                 Spacer()

@@ -1,113 +1,139 @@
-# Splash Screen - FamilySync
+# SplashScreen - Documentation
 
 ## Vue d'ensemble
 
-La splash screen de FamilySync est la première interface que voit l'utilisateur lors du lancement de l'application. Elle reproduit fidèlement le design de l'image de référence avec un dégradé rose-orange, l'icône de l'app avec la famille dans la maison, et les textes appropriés.
+Le SplashScreen est l'écran d'accueil de l'application FamilySync qui gère l'affichage initial et la navigation vers les différentes étapes de l'application.
 
 ## Architecture
 
 ### Structure des fichiers
 
 ```
-Views/
-├── SplashScreen/
-│   ├── SplashScreenView.swift          # Vue principale
-│   ├── SplashScreenViewModel.swift     # Logique métier
-│   └── Components/                     # Composants spécifiques à la splash screen
-│       ├── FamilyAppIcon.swift         # Icône de l'app
-│       ├── StartButton.swift           # Bouton START
-│       └── LoadingIndicator.swift      # Indicateur de chargement
-└── Components/                         # Composants globaux
-    └── AppleSignInButton.swift         # Bouton de connexion Apple
+Views/SplashScreen/
+├── SplashScreenView.swift          # Vue principale du splash screen
+├── SplashScreenViewModel.swift     # ViewModel gérant la logique métier
+└── Components/
+    ├── FamilyAppIcon.swift         # Icône de l'application
+    ├── LoadingIndicator.swift      # Indicateur de chargement
+    ├── StartButton.swift           # Bouton de démarrage (première utilisation)
+    └── LoginButton.swift           # Bouton de connexion (nouveau)
 ```
 
-### Composants
+## Fonctionnalités
 
-#### 1. SplashScreenView
-- **Responsabilité** : Affichage principal de la splash screen
-- **Fonctionnalités** :
-  - Dégradé de fond rose-orange
-  - Affichage conditionnel des éléments selon l'état
-  - Gestion de la première utilisation vs connexion
-  - **Ombre orange légère** sur le texte "FamilySync" pour améliorer la lisibilité
+### États du SplashScreen
 
-#### 2. SplashScreenViewModel
-- **Responsabilité** : Logique métier de la splash screen
-- **Fonctionnalités** :
-  - Détection de la première utilisation (UserDefaults)
-  - Gestion de l'état d'authentification
-  - Navigation vers l'écran principal
+Le SplashScreen peut être dans trois états différents :
 
-#### 3. FamilyAppIcon
-- **Responsabilité** : Affichage de l'icône de l'app
-- **Éléments** :
-  - Utilise l'image `AppIcon` existante dans les assets
-  - Redimensionnement automatique avec aspect ratio
-  - Coins arrondis pour un rendu moderne
+1. **Première utilisation** (`isFirstLaunch = true`)
+   - Affiche le bouton "Commencer" (`StartButton`)
+   - Permet à l'utilisateur de démarrer l'onboarding
 
-#### 4. StartButton
-- **Responsabilité** : Bouton START avec style outline
-- **Style** : Rectangle arrondi avec bordure blanche
+2. **Chargement** (`isLoading = true`)
+   - Affiche l'indicateur de chargement (`LoadingIndicator`)
+   - Vérifie l'état d'authentification de l'utilisateur
 
-#### 5. LoadingIndicator
-- **Responsabilité** : Indicateur de chargement animé
-- **Éléments** : Spinner rotatif + texte "Connecting..."
+3. **Utilisateur non connecté** (`showLoginButton = true`)
+   - Affiche le bouton "Se connecter" (`LoginButton`)
+   - Permet à l'utilisateur de naviguer vers l'onboarding pour se connecter
 
-## Logique de fonctionnement
+### Logique de navigation
 
-### Première utilisation
-1. L'utilisateur voit la splash screen avec le bouton START
-2. Clic sur START → marquage de la première utilisation
-3. Navigation vers l'écran principal
+```swift
+// Dans SplashScreenViewModel
+func checkAuthenticationStatus(authService: AuthService) {
+    if !isFirstLaunch {
+        Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 secondes
+            
+            await MainActor.run {
+                if authService.isAuthenticated {
+                    shouldNavigateToMain = true
+                    NotificationCenter.default.post(name: .splashScreenCompleted, object: nil)
+                } else {
+                    // Si pas connecté, on affiche le bouton de connexion
+                    isLoading = false
+                    showLoginButton = true
+                }
+            }
+        }
+    }
+}
+```
 
-### Utilisations suivantes
-1. Affichage de la splash screen avec loading
-2. Vérification de l'authentification (2 secondes de délai)
-3. Si connecté → navigation automatique
-4. Si non connecté → affichage du bouton de connexion
+## Problème résolu
 
-## Intégration
+### Problème initial
+- Quand l'utilisateur n'était pas connecté, le splash screen affichait un indicateur de chargement puis ne montrait rien
+- L'utilisateur ne pouvait pas naviguer vers l'onboarding pour se connecter
 
-### Notification Center
-- Utilisation de `NotificationCenter` pour la communication entre composants
-- Notification `.splashScreenCompleted` pour déclencher la navigation
+### Solution implémentée
 
-### Animations
-- Transition fluide entre splash screen et écran principal
-- Animation du spinner de chargement
-- Effets de scale sur le bouton START
+1. **Ajout d'une nouvelle propriété** dans `SplashScreenViewModel` :
+   ```swift
+   @Published var showLoginButton: Bool = false
+   ```
 
-## Personnalisation
+2. **Modification de la logique d'authentification** :
+   - Quand l'utilisateur n'est pas connecté après le délai de chargement
+   - `isLoading` passe à `false`
+   - `showLoginButton` passe à `true`
 
-### Couleurs
-- Dégradé : Rose clair (#FFE6E6) → Orange clair (#FFE6B3)
-- Texte : Blanc (#FFFFFF)
-- Icône : Couleurs pastel pour la famille
+3. **Création du composant `LoginButton`** :
+   - Bouton stylisé avec les couleurs de l'application
+   - Action pour naviguer vers l'onboarding
+   - Design cohérent avec les autres composants
 
-### Typographie
-- App name : 32pt, bold, rounded
-- Tagline : 16pt, regular, rounded
-- Bouton : 18pt, bold, rounded
+4. **Mise à jour de la vue** :
+   ```swift
+   if viewModel.isFirstLaunch {
+       StartButton(action: viewModel.startApp)
+   } else if viewModel.isLoading {
+       LoadingIndicator()
+   } else if viewModel.showLoginButton {
+       LoginButton(action: viewModel.proceedToLogin)
+   }
+   ```
+
+## Composants
+
+### LoginButton
+
+Nouveau composant créé pour permettre la connexion depuis le splash screen.
+
+**Caractéristiques :**
+- Design cohérent avec l'identité visuelle
+- Gradient de couleurs coral/saumon
+- Icône utilisateur
+- Animation au toucher
+- Ombre portée pour la profondeur
+
+**Utilisation :**
+```swift
+LoginButton(action: viewModel.proceedToLogin)
+```
+
+## Flux utilisateur
+
+1. **Première utilisation** : SplashScreen → Onboarding
+2. **Utilisateur connecté** : SplashScreen → ContentView (écran principal)
+3. **Utilisateur non connecté** : SplashScreen → Onboarding (pour connexion)
 
 ## Tests
 
-### Preview SwiftUI
-Chaque composant dispose d'un PreviewProvider pour validation visuelle rapide.
-
-### Scénarios de test
-1. Première utilisation
-2. Utilisation avec utilisateur connecté
-3. Utilisation avec utilisateur non connecté
-4. Transition entre les états
+Le build a été testé avec succès :
+```bash
+xcodebuild -project FamilySync.xcodeproj -scheme FamilySync -destination 'platform=iOS Simulator,name=iPhone 16' build
+```
 
 ## Maintenance
 
-### Ajout de nouvelles fonctionnalités
-- Respecter l'architecture MVVM
-- Ajouter la documentation correspondante
-- Tester les previews SwiftUI
+### Points d'attention
+- Vérifier que le délai de chargement (2 secondes) est approprié
+- S'assurer que la navigation vers l'onboarding fonctionne correctement
+- Maintenir la cohérence visuelle avec les autres écrans
 
-### Modifications du design
-- Maintenir la cohérence avec l'image de référence
-- Tester sur différents appareils
-- Valider l'accessibilité
+### Évolutions possibles
+- Ajouter des animations de transition
+- Personnaliser le délai de chargement selon les besoins
+- Ajouter des analytics pour suivre l'usage
