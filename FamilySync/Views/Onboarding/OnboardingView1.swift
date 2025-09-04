@@ -15,6 +15,7 @@ struct OnboardingView1: View {
     var body: some View {
         ZStack {
             // Background
+            
             Color(red: 0.98, green: 0.95, blue: 0.92) // Light warm peach
                 .ignoresSafeArea()
             
@@ -23,11 +24,11 @@ struct OnboardingView1: View {
                 VStack(spacing: 8) {
                     Text("Start with")
                         .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.3))
+                        .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.5))
                     
                     Text("FamilySync")
                         .font(.system(size: 35, weight: .black, design: .rounded))
-                        .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.3))
+                        .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.5))
                 }
                 .padding(.top, 40)
                 

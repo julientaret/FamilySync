@@ -22,7 +22,7 @@ struct OnboardingStep: View {
             // Step Text
             Text(text)
                 .font(.system(size: 18, weight: .medium, design: .rounded))
-                .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.3))
+                .foregroundColor(Color(red: 1.0, green: 0.6, blue: 0.5))
                 .multilineTextAlignment(.leading)
             
             Spacer()
