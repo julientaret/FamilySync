@@ -118,10 +118,10 @@ class OnboardingViewModel: ObservableObject {
                 }
                 
                 // S'assurer que l'utilisateur existe en base
-                let user = try await userDatabaseService.ensureUserExists(userId: userId)
+                _ = try await userDatabaseService.ensureUserExists(userId: userId)
                 
                 // Mettre à jour le profil avec le nom et la date de naissance
-                let updatedUser = try await userDatabaseService.updateUserProfile(
+                _ = try await userDatabaseService.updateUserProfile(
                     userId: userId,
                     name: name.trimmingCharacters(in: .whitespacesAndNewlines),
                     birthday: birthday

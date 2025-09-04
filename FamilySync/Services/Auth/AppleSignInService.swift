@@ -165,7 +165,7 @@ class AppleSignInService: ObservableObject {
             }
             
             // Enregistrer l'utilisateur dans la base de données
-            try await userDatabaseService.ensureUserExists(userId: user.id)
+            _ = try await userDatabaseService.ensureUserExists(userId: user.id)
             
         } catch {
             await MainActor.run {

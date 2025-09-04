@@ -8,7 +8,7 @@ class FamilyDatabaseService: ObservableObject {
     static let shared = FamilyDatabaseService()
     
     private let client: Client
-    private let database: Databases
+    private let databases: Databases
     private let account: Account
     
     private let databaseId = "68b71f3800292dc2e621"
@@ -19,7 +19,7 @@ class FamilyDatabaseService: ObservableObject {
             .setEndpoint(AppwriteConfig.endpoint)
             .setProject(AppwriteConfig.projectId)
         
-        database = Databases(client)
+        databases = Databases(client)
         account = Account(client)
     }
     
@@ -49,16 +49,11 @@ class FamilyDatabaseService: ObservableObject {
             let inviteCode = generateInviteCode()
             let familyData = Family.create(name: name, creatorId: creatorId, inviteCode: inviteCode)
             
-            let document = try await database.createDocument(
+            let document = try await databases.createDocument(
                 databaseId: databaseId,
                 collectionId: collectionId,
-                documentId: "unique()",
-                data: familyData,
-                permissions: [
-                    Permission.read(Role.user(creatorId)),
-                    Permission.update(Role.user(creatorId)),
-                    Permission.delete(Role.user(creatorId))
-                ]
+                documentId: "uniqueId()",
+                data: familyData
             )
             
             return Family(
@@ -80,7 +75,7 @@ class FamilyDatabaseService: ObservableObject {
     func joinFamily(inviteCode: String, userId: String) async throws -> Family {
         do {
             // Rechercher la famille par le code d'invitation
-            let families = try await database.listDocuments(
+            let families = try await databases.listDocuments(
                 databaseId: databaseId,
                 collectionId: collectionId,
                 queries: [
@@ -103,7 +98,7 @@ class FamilyDatabaseService: ObservableObject {
             updatedMembers.append(userId)
             
             // Mettre à jour le document sans modifier les permissions existantes
-            let updatedDocument = try await database.updateDocument(
+            let updatedDocument = try await databases.updateDocument(
                 databaseId: databaseId,
                 collectionId: collectionId,
                 documentId: familyDocument.id,
@@ -130,7 +125,7 @@ class FamilyDatabaseService: ObservableObject {
     /// Récupère une famille par son ID
     func getFamily(familyId: String) async throws -> Family? {
         do {
-            let document = try await database.getDocument(
+            let document = try await databases.getDocument(
                 databaseId: databaseId,
                 collectionId: collectionId,
                 documentId: familyId
@@ -154,7 +149,7 @@ class FamilyDatabaseService: ObservableObject {
     /// Met à jour une famille
     func updateFamily(familyId: String, data: [String: Any]) async throws -> Family {
         do {
-            let document = try await database.updateDocument(
+            let document = try await databases.updateDocument(
                 databaseId: databaseId,
                 collectionId: collectionId,
                 documentId: familyId,

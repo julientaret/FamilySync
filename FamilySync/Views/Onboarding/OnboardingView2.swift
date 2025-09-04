@@ -128,7 +128,7 @@ struct OnboardingView2: View {
                 .environmentObject(familyViewModel)
                 .environmentObject(onboardingViewModel)
         }
-        .onChange(of: familyViewModel.currentFamily) { family in
+        .onChange(of: familyViewModel.currentFamily) { _, family in
             if family != nil && !familyViewModel.showInviteCodeModal {
                 // Si une famille a été rejointe (pas créée), passer à l'étape suivante
                 onboardingViewModel.currentFamily = family

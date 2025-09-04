@@ -34,7 +34,7 @@ class OAuth2Service: ObservableObject {
         }
         
         do {
-            _ = try await account.createOAuth2Session(
+            _ = try await account.createOAuth2Token(
                 provider: .apple,
                 scopes: scopes
             )
@@ -65,7 +65,7 @@ class OAuth2Service: ObservableObject {
         }
         
         do {
-            _ = try await account.createOAuth2Session(
+            _ = try await account.createOAuth2Token(
                 provider: .github,
                 scopes: scopes
             )
@@ -96,7 +96,7 @@ class OAuth2Service: ObservableObject {
         }
         
         do {
-            _ = try await account.createOAuth2Session(
+            _ = try await account.createOAuth2Token(
                 provider: .google,
                 scopes: scopes
             )
@@ -129,7 +129,7 @@ class OAuth2Service: ObservableObject {
             }
             
             // Enregistrer l'utilisateur dans la base de données
-            try await userDatabaseService.ensureUserExists(userId: user.id)
+            _ = try await userDatabaseService.ensureUserExists(userId: user.id)
             
         } catch {
             await MainActor.run {

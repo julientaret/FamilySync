@@ -78,23 +78,23 @@ struct AppleSignInButton: View {
             DispatchQueue.main.async {
                 if let authError = error as? ASAuthorizationError {
                     switch authError.code {
-                    case ASAuthorizationError.canceled:
+                    case .canceled:
                         self.errorMessage = "Connexion Apple annulée"
-                    case ASAuthorizationError.failed:
+                    case .failed:
                         self.errorMessage = "Échec de la connexion Apple"
-                    case ASAuthorizationError.invalidResponse:
+                    case .invalidResponse:
                         self.errorMessage = "Réponse Apple invalide"
-                    case ASAuthorizationError.notHandled:
+                    case .notHandled:
                         self.errorMessage = "Connexion Apple non gérée"
-                    case ASAuthorizationError.unknown:
+                    case .unknown:
                         self.errorMessage = "Erreur Apple inconnue"
-                    case ASAuthorizationError.notInteractive:
+                    case .notInteractive:
                         self.errorMessage = "Connexion Apple non interactive"
-                    case ASAuthorizationError.matchedExcludedCredential:
+                    case .matchedExcludedCredential:
                         self.errorMessage = "Credential Apple exclu"
-                    case ASAuthorizationError.credentialImport:
+                    case .credentialImport:
                         self.errorMessage = "Erreur d'import de credential"
-                    case ASAuthorizationError.credentialExport:
+                    case .credentialExport:
                         self.errorMessage = "Erreur d'export de credential"
                     @unknown default:
                         self.errorMessage = "Erreur Apple: \(authError.localizedDescription)"

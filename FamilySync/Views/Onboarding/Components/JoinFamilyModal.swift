@@ -37,7 +37,7 @@ struct JoinFamilyModal: View {
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .autocapitalization(.allCharacters)
                             .disableAutocorrection(true)
-                            .onChange(of: familyViewModel.inviteCode) { newValue in
+                            .onChange(of: familyViewModel.inviteCode) { _, newValue in
                                 // Convertir en majuscules
                                 familyViewModel.inviteCode = newValue.uppercased()
                             }

@@ -5,6 +5,7 @@ import Combine
 import AuthenticationServices
 
 /// Service principal d'authentification qui coordonne tous les services d'auth
+@MainActor
 class AuthService: ObservableObject {
     static let shared = AuthService()
     
@@ -105,30 +106,24 @@ class AuthService: ObservableObject {
     private func checkExistingSession() {
         print("🚨 [ALERT] AuthService.checkExistingSession() appelée")
         Task {
-            await MainActor.run {
-                isLoading = true
-            }
+            isLoading = true
             
             do {
                 // Essayer de récupérer l'utilisateur connecté
                 print("🚨 [ALERT] Tentative de récupération de l'utilisateur Apple")
                 try await appleSignInService.fetchCurrentUser()
                 
-                await MainActor.run {
-                    isLoading = false
-                    // Vérifier si l'utilisateur a été récupéré
-                    if currentUser != nil {
-                        print("🚨 [ALERT] Utilisateur trouvé, mise à jour de isAuthenticated")
-                        isAuthenticated = true
-                    } else {
-                        print("🚨 [ALERT] Aucun utilisateur trouvé")
-                    }
+                isLoading = false
+                // Vérifier si l'utilisateur a été récupéré
+                if currentUser != nil {
+                    print("🚨 [ALERT] Utilisateur trouvé, mise à jour de isAuthenticated")
+                    isAuthenticated = true
+                } else {
+                    print("🚨 [ALERT] Aucun utilisateur trouvé")
                 }
             } catch {
                 print("🚨 [ALERT] Erreur lors de la récupération de l'utilisateur: \(error)")
-                await MainActor.run {
-                    isLoading = false
-                }
+                isLoading = false
             }
         }
     }
@@ -167,13 +162,11 @@ class AuthService: ObservableObject {
                 break
             }
             
-            await MainActor.run {
-                isAuthenticated = false
-                currentUser = nil
-                currentProvider = .none
-                isLoading = false
-                errorMessage = nil
-            }
+            isAuthenticated = false
+            currentUser = nil
+            currentProvider = .none
+            isLoading = false
+            errorMessage = nil
             
             // Nettoyer les données UserDefaults directement
             let userDefaults = UserDefaults.standard
@@ -183,10 +176,8 @@ class AuthService: ObservableObject {
             userDefaults.synchronize()
             print("🧹 [DEBUG] Nettoyage UserDefaults effectué lors de la déconnexion")
         } catch {
-            await MainActor.run {
-                isLoading = false
-                errorMessage = error.localizedDescription
-            }
+            isLoading = false
+            errorMessage = error.localizedDescription
             throw error
         }
     }

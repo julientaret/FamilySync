@@ -26,7 +26,7 @@ class UserDatabaseService: ObservableObject {
     static let shared = UserDatabaseService()
     
     private let client: Client
-    private let database: Databases
+    private let databases: Databases
     
     private let databaseId = "68b71f3800292dc2e621"
     private let collectionId = "users"
@@ -36,13 +36,13 @@ class UserDatabaseService: ObservableObject {
             .setEndpoint(AppwriteConfig.endpoint)
             .setProject(AppwriteConfig.projectId)
         
-        database = Databases(client)
+        databases = Databases(client)
     }
     
     /// Enregistre un utilisateur dans la base de données
     func createUser(userId: String) async throws -> UserDocument {
         do {
-            let document = try await database.createDocument(
+            let document = try await databases.createDocument(
                 databaseId: databaseId,
                 collectionId: collectionId,
                 documentId: userId, // Utilise le même ID que l'auth
@@ -68,7 +68,7 @@ class UserDatabaseService: ObservableObject {
     /// Récupère un utilisateur depuis la base de données
     func getUser(userId: String) async throws -> UserDocument? {
         do {
-            let document = try await database.getDocument(
+            let document = try await databases.getDocument(
                 databaseId: databaseId,
                 collectionId: collectionId,
                 documentId: userId
@@ -92,7 +92,7 @@ class UserDatabaseService: ObservableObject {
     /// Met à jour un utilisateur dans la base de données
     func updateUser(userId: String, data: [String: Any]) async throws -> UserDocument {
         do {
-            let document = try await database.updateDocument(
+            let document = try await databases.updateDocument(
                 databaseId: databaseId,
                 collectionId: collectionId,
                 documentId: userId,
@@ -120,7 +120,7 @@ class UserDatabaseService: ObservableObject {
             dateFormatter.dateFormat = "yyyy-MM-dd"
             let birthdayString = dateFormatter.string(from: birthday)
             
-            let document = try await database.updateDocument(
+            let document = try await databases.updateDocument(
                 databaseId: databaseId,
                 collectionId: collectionId,
                 documentId: userId,
@@ -147,7 +147,7 @@ class UserDatabaseService: ObservableObject {
     /// Met à jour la famille d'un utilisateur
     func updateUserFamily(userId: String, familyId: String) async throws -> UserDocument {
         do {
-            let document = try await database.updateDocument(
+            let document = try await databases.updateDocument(
                 databaseId: databaseId,
                 collectionId: collectionId,
                 documentId: userId,
