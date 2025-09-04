@@ -201,11 +201,18 @@ class OnboardingViewModel: ObservableObject {
         let savedName = userDefaults.string(forKey: userNameKey) ?? ""
         let savedBirthday = userDefaults.object(forKey: userBirthdayKey) as? Date
         
+        print("🔍 [DEBUG] hasUserProfile - savedName: '\(savedName)'")
+        print("🔍 [DEBUG] hasUserProfile - savedBirthday: \(String(describing: savedBirthday))")
+        
         // Pour qu'un profil soit considéré comme configuré, il faut :
         // 1. Un nom non vide qui n'est pas le nom par défaut "Utilisateur" d'Apple Sign In
         // 2. Une date de naissance
         let hasValidName = !savedName.isEmpty && savedName != "Utilisateur"
         let hasBirthday = savedBirthday != nil
+        
+        print("🔍 [DEBUG] hasUserProfile - hasValidName: \(hasValidName)")
+        print("🔍 [DEBUG] hasUserProfile - hasBirthday: \(hasBirthday)")
+        print("🔍 [DEBUG] hasUserProfile - result: \(hasValidName && hasBirthday)")
         
         return hasValidName && hasBirthday
     }
@@ -252,9 +259,26 @@ class OnboardingViewModel: ObservableObject {
     
     /// Initialise les données utilisateur depuis UserDefaults
     func loadUserData() {
-        userName = userDefaults.string(forKey: userNameKey) ?? ""
-        if let savedBirthday = userDefaults.object(forKey: userBirthdayKey) as? Date {
-            userBirthday = savedBirthday
+        let savedName = userDefaults.string(forKey: userNameKey) ?? ""
+        let savedBirthday = userDefaults.object(forKey: userBirthdayKey) as? Date
+        
+        print("🔍 [DEBUG] loadUserData - savedName: '\(savedName)'")
+        print("🔍 [DEBUG] loadUserData - savedBirthday: \(String(describing: savedBirthday))")
+        
+        // Ne charger les données que si elles sont valides (pas de nom "Utilisateur" par défaut)
+        if savedName != "Utilisateur" && !savedName.isEmpty {
+            userName = savedName
+            print("🔍 [DEBUG] loadUserData - Nom chargé: '\(userName)'")
+        } else {
+            userName = ""
+            print("🔍 [DEBUG] loadUserData - Nom ignoré car invalide")
+        }
+        
+        if let birthday = savedBirthday {
+            userBirthday = birthday
+            print("🔍 [DEBUG] loadUserData - Date de naissance chargée")
+        } else {
+            print("🔍 [DEBUG] loadUserData - Aucune date de naissance trouvée")
         }
     }
     
@@ -278,9 +302,19 @@ class OnboardingViewModel: ObservableObject {
     
     /// Nettoie les données UserDefaults lors de la déconnexion
     func clearUserData() {
+        print("🧹 [DEBUG] Nettoyage des données UserDefaults...")
+        print("🧹 [DEBUG] Avant nettoyage - userName: '\(userDefaults.string(forKey: userNameKey) ?? "nil")'")
+        print("🧹 [DEBUG] Avant nettoyage - userBirthday: \(userDefaults.object(forKey: userBirthdayKey) ?? "nil")")
+        
         userDefaults.removeObject(forKey: hasSeenOnboardingKey)
         userDefaults.removeObject(forKey: userNameKey)
         userDefaults.removeObject(forKey: userBirthdayKey)
+        
+        // Force la synchronisation
+        userDefaults.synchronize()
+        
+        print("🧹 [DEBUG] Après nettoyage - userName: '\(userDefaults.string(forKey: userNameKey) ?? "nil")'")
+        print("🧹 [DEBUG] Après nettoyage - userBirthday: \(userDefaults.object(forKey: userBirthdayKey) ?? "nil")")
         
         // Réinitialiser les variables d'instance
         userName = ""
@@ -289,6 +323,14 @@ class OnboardingViewModel: ObservableObject {
         currentFamily = nil
         shouldShowOnboarding = false
         isAuthenticated = false
+    }
+    
+    /// Force le nettoyage des données (pour débogage)
+    func forceResetOnboarding() {
+        print("🔄 [DEBUG] Force reset de l'onboarding...")
+        clearUserData()
+        currentOnboardingStep = 1
+        print("🔄 [DEBUG] Reset terminé, hasUserProfile: \(hasUserProfile())")
     }
     
     /// Initialise l'onboarding avec vérification automatique des étapes

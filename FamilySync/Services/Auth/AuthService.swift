@@ -173,11 +173,15 @@ class AuthService: ObservableObject {
                 currentProvider = .none
                 isLoading = false
                 errorMessage = nil
-                
-                // Nettoyer les données de l'onboarding
-                let onboardingViewModel = OnboardingViewModel()
-                onboardingViewModel.clearUserData()
             }
+            
+            // Nettoyer les données UserDefaults directement
+            let userDefaults = UserDefaults.standard
+            userDefaults.removeObject(forKey: "hasSeenOnboarding")
+            userDefaults.removeObject(forKey: "userName") 
+            userDefaults.removeObject(forKey: "userBirthday")
+            userDefaults.synchronize()
+            print("🧹 [DEBUG] Nettoyage UserDefaults effectué lors de la déconnexion")
         } catch {
             await MainActor.run {
                 isLoading = false
