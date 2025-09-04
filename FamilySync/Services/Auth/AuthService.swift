@@ -173,6 +173,10 @@ class AuthService: ObservableObject {
                 currentProvider = .none
                 isLoading = false
                 errorMessage = nil
+                
+                // Nettoyer les données de l'onboarding
+                let onboardingViewModel = OnboardingViewModel()
+                onboardingViewModel.clearUserData()
             }
         } catch {
             await MainActor.run {

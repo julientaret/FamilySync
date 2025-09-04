@@ -196,9 +196,18 @@ class OnboardingViewModel: ObservableObject {
     
     /// Vérifie si l'utilisateur a déjà saisi son nom et sa date de naissance
     func hasUserProfile() -> Bool {
+        // Ne plus se fier uniquement à UserDefaults
+        // Vérifier que les données sont présentes ET valides
         let savedName = userDefaults.string(forKey: userNameKey) ?? ""
         let savedBirthday = userDefaults.object(forKey: userBirthdayKey) as? Date
-        return !savedName.isEmpty && savedBirthday != nil
+        
+        // Pour qu'un profil soit considéré comme configuré, il faut :
+        // 1. Un nom non vide qui n'est pas le nom par défaut "Utilisateur" d'Apple Sign In
+        // 2. Une date de naissance
+        let hasValidName = !savedName.isEmpty && savedName != "Utilisateur"
+        let hasBirthday = savedBirthday != nil
+        
+        return hasValidName && hasBirthday
     }
     
     /// Vérifie et passe automatiquement les étapes si nécessaire
@@ -265,6 +274,21 @@ class OnboardingViewModel: ObservableObject {
         } catch {
             print("Erreur lors du chargement des données de famille: \(error)")
         }
+    }
+    
+    /// Nettoie les données UserDefaults lors de la déconnexion
+    func clearUserData() {
+        userDefaults.removeObject(forKey: hasSeenOnboardingKey)
+        userDefaults.removeObject(forKey: userNameKey)
+        userDefaults.removeObject(forKey: userBirthdayKey)
+        
+        // Réinitialiser les variables d'instance
+        userName = ""
+        userBirthday = Date()
+        currentOnboardingStep = 1
+        currentFamily = nil
+        shouldShowOnboarding = false
+        isAuthenticated = false
     }
     
     /// Initialise l'onboarding avec vérification automatique des étapes
